@@ -1,7 +1,7 @@
-package com.example.demo.service;
+package com.example.demo.services;
 
-import com.example.demo.model.User;
-import com.example.demo.repository.UserRepository;
+import com.example.demo.entities.User;
+import com.example.demo.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,9 +30,9 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        user.setName(userDetails.getName());
+        user.setFirstName(userDetails.getFirstName());
         user.setEmail(userDetails.getEmail());
-        user.setPhone(userDetails.getPhone());
+        user.setPhoneNumber(userDetails.getPhoneNumber());
         
         return userRepository.save(user);
     }
@@ -42,6 +42,6 @@ public class UserService {
     }
     
     public List<User> searchUsers(String name) {
-        return userRepository.findByNameContaining(name);
+        return userRepository.findByFirstNameContaining(name);
     }
 }

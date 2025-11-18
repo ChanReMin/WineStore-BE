@@ -175,9 +175,9 @@
                         </tr>
                         <tr th:each="user : ${users}">
                             <td th:text="${user.id}"></td>
-                            <td th:text="${user.name}"></td>
+                            <td th:text="${user.firstName}"></td>
                             <td th:text="${user.email}"></td>
-                            <td th:text="${user.phone}"></td>
+                            <td th:text="${user.phoneNumber}"></td>
                             <td>
                                 <button class="btn btn-delete" th:attr="data-id=${user.id}">Delete</button>
                             </td>
