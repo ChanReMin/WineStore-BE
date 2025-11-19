@@ -24,3 +24,5 @@ hs_err_pid*
 replay_pid*
 .env
 docker-compose.yml
+setup-replication.sh
+sync-schema-service.sh
