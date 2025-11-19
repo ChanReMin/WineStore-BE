@@ -24,6 +24,10 @@ public class Warehouse extends BaseEntity {
     @Column(length = 1000)
     private String description;
 
+    private String district;
+
+    private String city;
+
     @OneToMany(mappedBy = "warehouse")
     private java.util.List<Inventory> inventories;
 
