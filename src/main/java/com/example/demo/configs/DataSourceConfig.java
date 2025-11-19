@@ -24,8 +24,12 @@ public class DataSourceConfig {
                 .build();
 
         // Manually set connection properties from environment
-        dataSource.setJdbcUrl(System.getenv().getOrDefault("SPRING_DATASOURCE_WRITE_URL",
-                "jdbc:postgresql://localhost:5432/winestore"));
+        String writeHost = System.getenv().getOrDefault("DB_WRITE_HOST", "localhost");
+        String writePort = System.getenv().getOrDefault("DB_WRITE_PORT", "5432");
+        String writeDatabase = System.getenv().getOrDefault("DB_DATABASE", "winestore");
+        String writeJdbcUrl = String.format("jdbc:postgresql://%s:%s/%s", writeHost, writePort, writeDatabase);
+        dataSource.setJdbcUrl(writeJdbcUrl);
+
         dataSource.setUsername(System.getenv().getOrDefault("SPRING_DATASOURCE_WRITE_USERNAME", "user"));
         dataSource.setPassword(System.getenv().getOrDefault("SPRING_DATASOURCE_WRITE_PASSWORD", "password"));
         dataSource.setDriverClassName("org.postgresql.Driver");
@@ -41,8 +45,12 @@ public class DataSourceConfig {
                 .build();
 
         // Manually set connection properties from environment
-        dataSource.setJdbcUrl(System.getenv().getOrDefault("SPRING_DATASOURCE_READ_URL",
-                "jdbc:postgresql://localhost:5433/winestore"));
+        String readHost = System.getenv().getOrDefault("DB_READ_HOST", "localhost");
+        String readPort = System.getenv().getOrDefault("DB_READ_PORT", "5432");
+        String readDatabase = System.getenv().getOrDefault("DB_DATABASE", "winestore");
+        String readJdbcUrl = String.format("jdbc:postgresql://%s:%s/%s", readHost, readPort, readDatabase);
+        dataSource.setJdbcUrl(readJdbcUrl);
+
         dataSource.setUsername(System.getenv().getOrDefault("SPRING_DATASOURCE_READ_USERNAME", "user"));
         dataSource.setPassword(System.getenv().getOrDefault("SPRING_DATASOURCE_READ_PASSWORD", "password"));
         dataSource.setDriverClassName("org.postgresql.Driver");
