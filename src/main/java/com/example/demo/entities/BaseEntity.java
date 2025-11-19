@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -16,8 +17,8 @@ import java.time.LocalDateTime;
 @Setter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-@SQLDelete(sql = "UPDATE #{#entityName} SET deleted_at = NOW() WHERE id = ?")
-@Where(clause = "deleted_at IS NULL")
+@SQLDelete(sql = "UPDATE {h-schema}{h-table} SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL")
+@SQLRestriction("deleted_at IS NULL")
 public abstract class BaseEntity implements Serializable {
 
     @Id
@@ -34,21 +35,6 @@ public abstract class BaseEntity implements Serializable {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-        if (updatedAt == null) {
-            updatedAt = LocalDateTime.now();
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 
     public boolean isDeleted() {
         return deletedAt != null;
