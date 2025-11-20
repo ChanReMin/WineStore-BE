@@ -1,5 +1,9 @@
 package com.example.demo.controllers;
 
+import com.example.demo.dtos.auth.LoginRequestDto;
+import com.example.demo.dtos.auth.LoginResponseDto;
+import com.example.demo.dtos.auth.RefreshTokenRequestDto;
+import com.example.demo.dtos.auth.RefreshTokenResponseDto;
 import com.example.demo.dtos.auth.RegisterRequestDto;
 import com.example.demo.dtos.auth.RegisterResponseDto;
 import com.example.demo.dtos.responses.SuccessResponse;
@@ -8,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,5 +34,39 @@ public class AuthController {
                 .data(data)
                 .build();
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<SuccessResponse<LoginResponseDto>> login(@Valid @RequestBody LoginRequestDto request) {
+        var data = authService.login(request);
+        SuccessResponse<LoginResponseDto> response = SuccessResponse.<LoginResponseDto>builder()
+                .success(true)
+                .message("Đăng nhập thành công")
+                .data(data)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<SuccessResponse<RefreshTokenResponseDto>> refreshToken(@Valid @RequestBody RefreshTokenRequestDto request) {
+        var data = authService.refreshToken(request);
+        SuccessResponse<RefreshTokenResponseDto> response = SuccessResponse.<RefreshTokenResponseDto>builder()
+                .success(true)
+                .message("Làm mới token thành công")
+                .data(data)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<SuccessResponse<Void>> logout() {
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        authService.logout(userEmail);
+
+        SuccessResponse<Void> response = SuccessResponse.<Void>builder()
+                .success(true)
+                .message("Đăng xuất thành công")
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
