@@ -22,7 +22,7 @@ public class DataSourceLoggingAspect {
         boolean isReadOnly = TransactionSynchronizationManager.isCurrentTransactionReadOnly();
         String dataSource = isReadOnly ? "READ" : "WRITE";
 
-        log.info("→ Executing method: {} | DataSource: {} | ReadOnly: {}",
+        log.info("→ Executing meth  od: {} | DataSource: {} | ReadOnly: {}",
                 methodName, dataSource, isReadOnly);
 
         long startTime = System.currentTimeMillis();

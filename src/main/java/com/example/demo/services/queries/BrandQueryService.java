@@ -1,8 +1,7 @@
 package com.example.demo.services.queries;
 
 import com.example.demo.commons.annotations.ReadOnlyService;
-import com.example.demo.entities.Brand;
-import com.example.demo.models.dtos.responses.BrandResponse;
+import com.example.demo.dtos.responses.brand.BrandResponse;
 import com.example.demo.repositories.BrandRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

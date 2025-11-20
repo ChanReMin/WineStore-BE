@@ -55,6 +55,10 @@ public class Promotion extends BaseEntity {
     @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PromotionProduct> promotionProducts;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = false)
+    private Account createdBy;
+
     public boolean isActive() {
         if (status == null || status != 1) return false;
         LocalDateTime now = LocalDateTime.now();
