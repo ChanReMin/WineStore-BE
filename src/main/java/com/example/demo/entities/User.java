@@ -1,29 +1,29 @@
 package com.example.demo.entities;
 
+import com.example.demo.commons.enums.Gender;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
-@Table(name = "users",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_email_deleted_at",
-                        columnNames = {"email", "deleted_at"}
-                ),
-                @UniqueConstraint(
-                        name = "uk_account_id_deleted_at",
-                        columnNames = {"account_id", "deleted_at"}
-                )
-        },indexes = {
-        @Index(name = "idx_email", columnList = "email"),
-        @Index(name = "idx_account_id", columnList = "account_id")
-})
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User extends BaseEntity {
+@EntityListeners(AuditingEntityListener.class)
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false, unique = true)
@@ -38,17 +38,23 @@ public class User extends BaseEntity {
     @Column(name = "last_name", length = 100)
     private String lastName;
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String email;
-
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
     @Column(name = "date_of_birth")
     private java.time.LocalDate dateOfBirth;
 
+    @Enumerated(EnumType.ORDINAL)
     @Column(columnDefinition = "SMALLINT")
-    private Integer gender; // 0=unknown, 1=male, 2=female
+    private Gender gender;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private java.time.LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private java.time.LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private java.util.List<UserAddress> addresses;

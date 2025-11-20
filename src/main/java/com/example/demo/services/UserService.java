@@ -31,7 +31,6 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
         user.setFirstName(userDetails.getFirstName());
-        user.setEmail(userDetails.getEmail());
         user.setPhoneNumber(userDetails.getPhoneNumber());
         
         return userRepository.save(user);

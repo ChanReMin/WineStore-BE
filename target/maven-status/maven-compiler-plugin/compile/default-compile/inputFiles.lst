@@ -5,13 +5,13 @@
 /app/src/main/java/com/example/demo/entities/PaymentTransaction.java
 /app/src/main/java/com/example/demo/commons/enums/NotificationStatus.java
 /app/src/main/java/com/example/demo/dtos/auth/RegisterResponseDto.java
+/app/src/main/java/com/example/demo/commons/enums/AccountRole.java
 /app/src/main/java/com/example/demo/controllers/AuthController.java
 /app/src/main/java/com/example/demo/entities/Product.java
 /app/src/main/java/com/example/demo/entities/CartItem.java
 /app/src/main/java/com/example/demo/repositories/ProductRepository.java
 /app/src/main/java/com/example/demo/entities/Brand.java
 /app/src/main/java/com/example/demo/exceptions/ResourceNotFoundException.java
-/app/src/main/java/com/example/demo/repositories/RoleRepository.java
 /app/src/main/java/com/example/demo/commons/enums/Gender.java
 /app/src/main/java/com/example/demo/services/AuthService.java
 /app/src/main/java/com/example/demo/entities/Warehouse.java
@@ -22,7 +22,6 @@
 /app/src/main/java/com/example/demo/services/UserService.java
 /app/src/main/java/com/example/demo/entities/Category.java
 /app/src/main/java/com/example/demo/repositories/CategoryRepository.java
-/app/src/main/java/com/example/demo/entities/Role.java
 /app/src/main/java/com/example/demo/entities/User.java
 /app/src/main/java/com/example/demo/commons/enums/PaymentStatus.java
 /app/src/main/java/com/example/demo/commons/enums/OrderStatus.java

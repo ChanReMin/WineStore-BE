@@ -1,6 +1,7 @@
 package com.example.demo.dtos.auth;
 
 import com.example.demo.commons.enums.Gender;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -11,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -39,7 +40,8 @@ public class RegisterRequestDto {
     private String phoneNumber;
 
     @JsonProperty("date_of_birth")
-    private Date dateOfBirth;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+    private LocalDateTime dateOfBirth;
 
     @NotNull(message = "Gender is required")
     private Gender gender;

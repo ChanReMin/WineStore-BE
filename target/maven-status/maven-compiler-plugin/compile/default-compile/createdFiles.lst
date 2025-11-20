@@ -1,7 +1,6 @@
 com/example/demo/commons/enums/NotificationStatus.class
 com/example/demo/entities/Notification.class
 com/example/demo/configs/SecurityConfig.class
-com/example/demo/entities/Role.class
 com/example/demo/entities/PaymentTransaction.class
 com/example/demo/commons/enums/DataSourceType.class
 com/example/demo/entities/PromotionProduct$PromotionProductBuilder.class
@@ -40,8 +39,6 @@ com/example/demo/repositories/BrandRepository.class
 com/example/demo/dtos/responses/SuccessResponse$SuccessResponseBuilder.class
 com/example/demo/entities/Account$AccountBuilder.class
 com/example/demo/dtos/auth/RegisterResponseDto$RegisterResponseDtoBuilder.class
-com/example/demo/entities/Role$RoleBuilder.class
-com/example/demo/repositories/RoleRepository.class
 com/example/demo/entities/Inventory.class
 com/example/demo/DemoApplication.class
 com/example/demo/commons/enums/Gender.class
@@ -52,6 +49,7 @@ com/example/demo/dtos/responses/ErrorResponse$ErrorResponseBuilder.class
 com/example/demo/entities/Product$ProductBuilder.class
 com/example/demo/dtos/auth/RegisterResponseDto.class
 com/example/demo/dtos/responses/ErrorResponse$ErrorDetail.class
+com/example/demo/commons/enums/AccountRole.class
 com/example/demo/entities/User$UserBuilder.class
 com/example/demo/controllers/ViewController.class
 com/example/demo/dtos/responses/SuccessResponse.class
