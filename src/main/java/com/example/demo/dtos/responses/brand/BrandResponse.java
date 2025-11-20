@@ -1,4 +1,4 @@
-package com.example.demo.models.dtos.responses;
+package com.example.demo.dtos.responses.brand;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

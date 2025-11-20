@@ -1,11 +1,11 @@
 package com.example.demo.controllers;
 
-import com.example.demo.dtos.auth.LoginRequestDto;
-import com.example.demo.dtos.auth.LoginResponseDto;
-import com.example.demo.dtos.auth.RefreshTokenRequestDto;
-import com.example.demo.dtos.auth.RefreshTokenResponseDto;
-import com.example.demo.dtos.auth.RegisterRequestDto;
-import com.example.demo.dtos.auth.RegisterResponseDto;
+import com.example.demo.dtos.commands.auth.LoginRequestDto;
+import com.example.demo.dtos.responses.auth.LoginResponseDto;
+import com.example.demo.dtos.commands.auth.RefreshTokenRequestDto;
+import com.example.demo.dtos.responses.auth.RefreshTokenResponseDto;
+import com.example.demo.dtos.commands.auth.RegisterRequestDto;
+import com.example.demo.dtos.responses.auth.RegisterResponseDto;
 import com.example.demo.dtos.responses.SuccessResponse;
 import com.example.demo.services.AuthService;
 import jakarta.validation.Valid;

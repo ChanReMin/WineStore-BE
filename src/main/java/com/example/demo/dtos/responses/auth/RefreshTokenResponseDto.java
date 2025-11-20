@@ -1,4 +1,4 @@
-package com.example.demo.dtos.auth;
+package com.example.demo.dtos.responses.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

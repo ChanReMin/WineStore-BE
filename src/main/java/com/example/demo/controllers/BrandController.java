@@ -1,8 +1,8 @@
 package com.example.demo.controllers;
 
 import com.example.demo.entities.Brand;
-import com.example.demo.models.dtos.requests.commands.BrandCreateRequest;
-import com.example.demo.models.dtos.responses.BrandResponse;
+import com.example.demo.dtos.commands.brand.BrandCreateRequest;
+import com.example.demo.dtos.responses.brand.BrandResponse;
 import com.example.demo.services.commands.BrandCommandService;
 import com.example.demo.services.queries.BrandQueryService;
 import lombok.RequiredArgsConstructor;

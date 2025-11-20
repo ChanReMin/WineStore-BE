@@ -1,4 +1,4 @@
-package com.example.demo.dtos.auth;
+package com.example.demo.dtos.commands.auth;
 
 import com.example.demo.commons.enums.Gender;
 import com.fasterxml.jackson.annotation.JsonFormat;

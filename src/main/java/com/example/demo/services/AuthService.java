@@ -1,21 +1,21 @@
 package com.example.demo.services;
 
+import com.example.demo.commons.annotations.ReadOnlyService;
 import com.example.demo.commons.annotations.WriteService;
 import com.example.demo.commons.enums.AccountRole;
 import com.example.demo.commons.enums.AccountStatus;
-import com.example.demo.dtos.auth.LoginRequestDto;
-import com.example.demo.dtos.auth.LoginResponseDto;
-import com.example.demo.dtos.auth.RefreshTokenRequestDto;
-import com.example.demo.dtos.auth.RefreshTokenResponseDto;
-import com.example.demo.dtos.auth.RegisterRequestDto;
-import com.example.demo.dtos.auth.RegisterResponseDto;
+import com.example.demo.dtos.commands.auth.LoginRequestDto;
+import com.example.demo.dtos.responses.auth.LoginResponseDto;
+import com.example.demo.dtos.commands.auth.RefreshTokenRequestDto;
+import com.example.demo.dtos.responses.auth.RefreshTokenResponseDto;
+import com.example.demo.dtos.commands.auth.RegisterRequestDto;
+import com.example.demo.dtos.responses.auth.RegisterResponseDto;
 import com.example.demo.entities.Account;
 import com.example.demo.entities.User;
 import com.example.demo.exceptions.DuplicateResourceException;
-import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.repositories.AccountRepository;
 import com.example.demo.repositories.UserRepository;
-import com.example.demo.security.jwt.JwtService;
+import com.example.demo.configs.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -114,6 +114,7 @@ public class AuthService {
                 .build();
     }
 
+    @ReadOnlyService
     public RefreshTokenResponseDto refreshToken(RefreshTokenRequestDto request) {
         final String refreshToken = request.getRefreshToken();
         final String userEmail = jwtService.extractUsername(refreshToken);
