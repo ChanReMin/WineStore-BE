@@ -1,7 +1,7 @@
-package com.example.demo.models.mappers;
+package com.example.demo.dtos.mappers;
 
 import com.example.demo.entities.Brand;
-import com.example.demo.models.dtos.responses.BrandResponse;
+import com.example.demo.dtos.responses.brand.BrandResponse;
 
 public class BrandMapper {
 

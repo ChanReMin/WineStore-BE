@@ -1,4 +1,4 @@
-package com.example.demo.models.dtos.requests.commands;
+package com.example.demo.dtos.commands.brand;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,9 +1,6 @@
 package com.example.demo.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
@@ -31,4 +28,8 @@ public class Warehouse extends BaseEntity {
 
     @OneToMany(mappedBy = "warehouse")
     private java.util.List<InventoryLog> inventoryLogs;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manager_id", nullable = false)
+    private Account createdBy;
 }

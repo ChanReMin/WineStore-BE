@@ -1,29 +1,29 @@
 package com.example.demo.entities;
 
+import com.example.demo.commons.enums.AccountRole;
 import com.example.demo.commons.enums.AccountStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
+
 @Entity
-@Table(name = "accounts",
-        uniqueConstraints = {
-        @UniqueConstraint(
-                name = "uk_email_deleted_at",
-                columnNames = {"email", "deleted_at"}
-        )
-        }, indexes = {
-        @Index(name = "idx_email", columnList = "email"),
-        @Index(name = "idx_status", columnList = "status"),
-        @Index(name = "idx_deleted_at", columnList = "deleted_at")
-})
+@Table(name = "accounts")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Account extends BaseEntity {
+@EntityListeners(AuditingEntityListener.class)
+public class Account {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false, unique = true, length = 255)
     private String email;
@@ -31,16 +31,27 @@ public class Account extends BaseEntity {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
+    @Enumerated(EnumType.ORDINAL)
+    @Column(columnDefinition = "SMALLINT")
+    private AccountRole role;
 
     @Enumerated(EnumType.ORDINAL)
     @Column(columnDefinition = "SMALLINT")
     private AccountStatus status;
 
+    @Column(name = "refresh_token")
+    private String refreshToken;
+
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private User user;
