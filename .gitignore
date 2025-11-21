@@ -29,3 +29,4 @@ docker-compose.yml
 setup-replication.sh
 sync-schema-service.sh
 Dockerfile.dev
+generate-migration-docker.sh
