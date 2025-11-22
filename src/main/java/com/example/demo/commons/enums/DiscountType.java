@@ -1,5 +1,8 @@
 package com.example.demo.commons.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum DiscountType {
     PERCENTAGE(1),
     FIXED_AMOUNT(2);
@@ -10,7 +13,4 @@ public enum DiscountType {
         this.value = value;
     }
 
-    public int getValue() {
-        return value;
-    }
 }

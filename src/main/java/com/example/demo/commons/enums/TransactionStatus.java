@@ -1,5 +1,8 @@
 package com.example.demo.commons.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum TransactionStatus {
     PENDING(1),
     SUCCESS(2),
@@ -11,7 +14,4 @@ public enum TransactionStatus {
         this.value = value;
     }
 
-    public int getValue() {
-        return value;
-    }
 }
