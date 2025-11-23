@@ -1,5 +1,8 @@
 package com.example.demo.commons.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum PaymentStatus {
     UNPAID(0),
     PAID(1),
@@ -11,7 +14,4 @@ public enum PaymentStatus {
         this.value = value;
     }
 
-    public int getValue() {
-        return value;
-    }
 }

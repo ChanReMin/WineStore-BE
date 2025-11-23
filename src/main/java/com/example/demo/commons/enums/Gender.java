@@ -1,5 +1,8 @@
 package com.example.demo.commons.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum Gender {
     UNKNOWN(0),
     MALE(1),
@@ -11,7 +14,4 @@ public enum Gender {
         this.value = value;
     }
 
-    public int getValue() {
-        return value;
-    }
 }

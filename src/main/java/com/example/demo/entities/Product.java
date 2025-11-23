@@ -1,13 +1,16 @@
 package com.example.demo.entities;
 
+import com.example.demo.commons.enums.ProductStatus;
+import com.example.demo.utils.FloatArrayToVectorConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "product",
+@Table(name = "products",
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_product_name_deleted_at",
@@ -74,6 +77,11 @@ public class Product extends BaseEntity {
     @Column(name = "avoid_vibration", columnDefinition = "TEXT")
     private String avoidVibration;
 
+    @Column(name = "description_vector", columnDefinition = "vector(1536)", insertable = false, updatable = false)
+    @Convert(converter = FloatArrayToVectorConverter.class)
+    @Basic(fetch = FetchType.LAZY, optional = true)
+    private float[] descriptionVector;
+
     @Column(name = "opened_wine", columnDefinition = "TEXT")
     private String openedWine;
 
@@ -85,6 +93,21 @@ public class Product extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Enumerated(EnumType.ORDINAL)
+    @Column(columnDefinition = "SMALLINT", nullable = false)
+    private ProductStatus status;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by")
+    private Account approvedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private Account createdBy;
 
     @OneToMany(mappedBy = "product")
     private List<Inventory> inventories;
