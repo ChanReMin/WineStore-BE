@@ -4,9 +4,9 @@ import lombok.Getter;
 
 @Getter
 public enum ProductStatus {
-    PENDING(1, "Chờ duyệt"),
-    ACTIVE(2, "Đang hoạt động"),
-    BAN(3, "Bị cấm");
+    PENDING(1, "Pending"),
+    ACTIVE(2, "Active"),
+    BAN(3, "Ban");
 
     private final Integer code;
     private final String description;

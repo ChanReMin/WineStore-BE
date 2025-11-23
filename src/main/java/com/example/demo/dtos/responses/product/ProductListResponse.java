@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductListResponse {
+public class    ProductListResponse {
     private Long id;
     private String name;
     private BigDecimal price;

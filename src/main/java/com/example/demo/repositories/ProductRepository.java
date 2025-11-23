@@ -1,6 +1,7 @@
 package com.example.demo.repositories;
 
 import com.example.demo.commons.enums.ProductStatus;
+import com.example.demo.entities.Account;
 import com.example.demo.entities.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,12 +17,12 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    @EntityGraph(attributePaths = {"category", "brand", "approvedBy"})
+    @EntityGraph(attributePaths = {"category", "brand", "approvedBy", "createdBy"})
     @Query("SELECT p FROM Product p WHERE p.id = :id AND p.deletedAt IS NULL")
     Optional<Product> findByIdWithDetails(@Param("id") Long id);
 
     // Using EntityGraph instead of JOIN FETCH to avoid vector type issues
-    @EntityGraph(attributePaths = {"category", "brand", "approvedBy"})
+    @EntityGraph(attributePaths = {"category", "brand", "approvedBy", "createdBy"})
     @Query("SELECT p FROM Product p " +
             "WHERE (:status IS NULL OR p.status = :status) " +
             "AND (:search IS NULL OR :search = '' OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
@@ -42,4 +43,24 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.deletedAt IS NULL")
     Long countAllActive();
+
+    // Queries for seller - filter by createdBy
+    @EntityGraph(attributePaths = {"category", "brand", "approvedBy", "createdBy"})
+    @Query("SELECT p FROM Product p " +
+            "WHERE p.createdBy = :createdBy " +
+            "AND (:status IS NULL OR p.status = :status) " +
+            "AND (:search IS NULL OR :search = '' OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "AND p.deletedAt IS NULL")
+    Page<Product> findAllByCreatedByWithFilters(
+            @Param("createdBy") Account createdBy,
+            @Param("status") ProductStatus status,
+            @Param("search") String search,
+            Pageable pageable
+    );
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.createdBy = :createdBy AND p.deletedAt IS NULL")
+    Long countByCreatedBy(@Param("createdBy") Account createdBy);
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.createdBy = :createdBy AND p.status = :status AND p.deletedAt IS NULL")
+    Long countByCreatedByAndStatus(@Param("createdBy") Account createdBy, @Param("status") ProductStatus status);
 }

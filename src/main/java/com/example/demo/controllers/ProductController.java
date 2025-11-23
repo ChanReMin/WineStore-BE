@@ -27,7 +27,7 @@ public class ProductController {
      * GET /api/v1/products
      * Quyền: SELLER
      */
-    @PreAuthorize("hasRole('SELLER')")
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @GetMapping
     public ResponseEntity<SuccessResponse<ProductResponse>> getAllProducts(
             @RequestParam(defaultValue = "1") Integer page,
@@ -40,7 +40,7 @@ public class ProductController {
         SuccessResponse<ProductResponse> response = SuccessResponse.<ProductResponse>builder()
                 .success(true)
                 .data(data)
-                .message("List of products fetched successfully")
+                .message("Product list retrieved successfully.")
                 .build();
 
         return ResponseEntity.ok(response);
@@ -60,7 +60,7 @@ public class ProductController {
 
         SuccessResponse<CreateProductResponse> response = SuccessResponse.<CreateProductResponse>builder()
                 .success(true)
-                .message("Tạo sản phẩm thành công. Đang chờ admin duyệt.")
+                .message("Product created successfully and is pending admin approval.")
                 .data(product)
                 .build();
 
@@ -82,7 +82,7 @@ public class ProductController {
 
         SuccessResponse<CreateProductResponse> response = SuccessResponse.<CreateProductResponse>builder()
                 .success(true)
-                .message("Cập nhật sản phẩm thành công. Đang chờ admin duyệt lại.")
+                .message("Product updated successfully and is pending admin re-approval.")
                 .data(product)
                 .build();
 
@@ -101,7 +101,7 @@ public class ProductController {
 
         SuccessResponse<Void> response = SuccessResponse.<Void>builder()
                 .success(true)
-                .message("Xóa sản phẩm thành công")
+                .message("Product deleted successfully.")
                 .build();
 
         return ResponseEntity.ok(response);

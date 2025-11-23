@@ -49,11 +49,6 @@ public class CreateProductRequest {
 
     private String idealTemperature;
     private String humidity;
-    private String avoidLight;
-    private String placeTheBottleHorizontally;
-    private String avoidVibration;
-    private String openedWine;
-    private String useWineCabinet;
 
     @Size(max = 1000, message = "Images must not exceed 1000 characters")
     private String images;

@@ -105,6 +105,10 @@ public class Product extends BaseEntity {
     @JoinColumn(name = "approved_by")
     private Account approvedBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private Account createdBy;
+
     @OneToMany(mappedBy = "product")
     private List<Inventory> inventories;
 

@@ -66,11 +66,6 @@ public class ProductMapper {
                 .capacity(request.getCapacity())
                 .idealTemperature(request.getIdealTemperature())
                 .humidity(request.getHumidity())
-                .avoidLight(request.getAvoidLight())
-                .placeTheBottleHorizontally(request.getPlaceTheBottleHorizontally())
-                .avoidVibration(request.getAvoidVibration())
-                .openedWine(request.getOpenedWine())
-                .useWineCabinet(request.getUseWineCabinet())
                 .images(request.getImages())
                 .description(request.getDescription())
                 .build();
@@ -91,11 +86,6 @@ public class ProductMapper {
         product.setCapacity(request.getCapacity());
         product.setIdealTemperature(request.getIdealTemperature());
         product.setHumidity(request.getHumidity());
-        product.setAvoidLight(request.getAvoidLight());
-        product.setPlaceTheBottleHorizontally(request.getPlaceTheBottleHorizontally());
-        product.setAvoidVibration(request.getAvoidVibration());
-        product.setOpenedWine(request.getOpenedWine());
-        product.setUseWineCabinet(request.getUseWineCabinet());
         product.setImages(request.getImages());
         product.setDescription(request.getDescription());
     }
