@@ -1,6 +1,5 @@
 package com.example.demo.services;
-
-import com.example.demo.repositories.AccountRepository;
+import com.example.demo.repositories.commands.AccountCommandRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -15,11 +14,11 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private final AccountRepository accountRepository;
+    private final AccountCommandRepository accountCommandRepository;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return accountRepository.findByEmail(email)
+        return accountCommandRepository.findByEmail(email)
                 .map(account -> new User(
                         account.getEmail(),
                         account.getPasswordHash(),
