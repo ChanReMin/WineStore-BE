@@ -34,13 +34,13 @@ public class JpaConfig {
         em.setPersistenceUnitName("writeUnit");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
-        vendorAdapter.setGenerateDdl(true);
+        vendorAdapter.setGenerateDdl(false);
         vendorAdapter.setShowSql(true);
         em.setJpaVendorAdapter(vendorAdapter);
 
         Properties properties = new Properties();
         properties.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        properties.setProperty("hibernate.hbm2ddl.auto", "update");
+        properties.setProperty("hibernate.hbm2ddl.auto", "none");
         properties.setProperty("hibernate.format_sql", "true");
         properties.setProperty("hibernate.jdbc.batch_size", "20");
         properties.setProperty("hibernate.order_inserts", "true");
