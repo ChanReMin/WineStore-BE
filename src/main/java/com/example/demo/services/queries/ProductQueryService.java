@@ -1,6 +1,5 @@
 package com.example.demo.services.queries;
 
-import com.example.demo.commons.annotations.ReadOnlyService;
 import com.example.demo.commons.enums.ProductStatus;
 import com.example.demo.dtos.mappers.product.ProductMapper;
 import com.example.demo.dtos.responses.product.ProductListResponse;
@@ -8,8 +7,8 @@ import com.example.demo.dtos.responses.product.ProductResponse;
 import com.example.demo.entities.Account;
 import com.example.demo.entities.Product;
 import com.example.demo.exceptions.ResourceNotFoundException;
-import com.example.demo.repositories.AccountRepository;
-import com.example.demo.repositories.ProductRepository;
+import com.example.demo.repositories.queries.AccountQueryRepository;
+import com.example.demo.repositories.queries.ProductQueryRepository;
 import com.example.demo.configs.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,12 +31,12 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ProductQueryService {
 
-    private final ProductRepository productRepository;
-    private final AccountRepository accountRepository;
+    private final ProductQueryRepository productQueryRepository;
+    private final AccountQueryRepository accountRepository;
     private final ProductMapper productMapper;
     private final SecurityUtils securityUtils;
 
-    @ReadOnlyService
+    @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public ProductResponse getAllProducts(Integer page, Integer limit, Integer status, String search) {
         log.info("Fetching products - page: {}, limit: {}, status: {}, search: {}", page, limit, status, search);
 
@@ -65,14 +64,14 @@ public class ProductQueryService {
             Account currentUser = accountRepository.findByEmail(currentUserEmail)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-            productPage = productRepository.findAllByCreatedByWithFilters(
+            productPage = productQueryRepository.findAllByCreatedByWithFilters(
                     currentUser, productStatus, search, pageable);
 
             log.info("Filtered products for seller: {}", currentUserEmail);
         }
         // ADMIN see all product
         else {
-            productPage = productRepository.findAllWithFilters(productStatus, search, pageable);
+            productPage = productQueryRepository.findAllWithFilters(productStatus, search, pageable);
             log.info("Fetching all products for admin");
         }
 
@@ -96,16 +95,16 @@ public class ProductQueryService {
             Account currentUser = accountRepository.findByEmail(currentUserEmail)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-            totalCount = productRepository.countByCreatedBy(currentUser);
-            pendingCount = productRepository.countByCreatedByAndStatus(currentUser, ProductStatus.PENDING);
-            activeCount = productRepository.countByCreatedByAndStatus(currentUser, ProductStatus.ACTIVE);
-            bannedCount = productRepository.countByCreatedByAndStatus(currentUser, ProductStatus.BAN);
+            totalCount = productQueryRepository.countByCreatedBy(currentUser);
+            pendingCount = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.PENDING);
+            activeCount = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.ACTIVE);
+            bannedCount = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.BAN);
         } else {
             // Count all products for admin
-            totalCount = productRepository.countAllActive();
-            pendingCount = productRepository.countByStatus(ProductStatus.PENDING);
-            activeCount = productRepository.countByStatus(ProductStatus.ACTIVE);
-            bannedCount = productRepository.countByStatus(ProductStatus.BAN);
+            totalCount = productQueryRepository.countAllActive();
+            pendingCount = productQueryRepository.countByStatus(ProductStatus.PENDING);
+            activeCount = productQueryRepository.countByStatus(ProductStatus.ACTIVE);
+            bannedCount = productQueryRepository.countByStatus(ProductStatus.BAN);
         }
 
         ProductResponse.ProductSummary summary = ProductResponse.ProductSummary.builder()

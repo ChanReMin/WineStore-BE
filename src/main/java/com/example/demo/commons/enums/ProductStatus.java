@@ -1,12 +1,14 @@
 package com.example.demo.commons.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 
 @Getter
 public enum ProductStatus {
-    PENDING(1, "Pending"),
-    ACTIVE(2, "Active"),
-    BAN(3, "Ban");
+    PENDING(0, "Pending"),
+    ACTIVE(1, "Active"),
+    BAN(2, "Ban");
 
     private final Integer code;
     private final String description;
@@ -16,6 +18,20 @@ public enum ProductStatus {
         this.description = description;
     }
 
+    /**
+     * @JsonValue tells Jackson to serialize this enum using the 'code' field
+     * Example: ProductStatus.PENDING will be serialized as 0 in JSON
+     */
+    @JsonValue
+    public Integer getCode() {
+        return code;
+    }
+
+    /**
+     * @JsonCreator tells Jackson how to deserialize JSON back to this enum
+     * Example: When JSON contains "status": 0, it will be converted to ProductStatus.PENDING
+     */
+    @JsonCreator
     public static ProductStatus fromCode(Integer code) {
         if (code == null) {
             return null;

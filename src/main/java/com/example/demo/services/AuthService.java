@@ -1,7 +1,4 @@
 package com.example.demo.services;
-
-import com.example.demo.commons.annotations.ReadOnlyService;
-import com.example.demo.commons.annotations.WriteService;
 import com.example.demo.commons.enums.AccountRole;
 import com.example.demo.commons.enums.AccountStatus;
 import com.example.demo.configs.jwt.JwtService;
@@ -14,8 +11,10 @@ import com.example.demo.dtos.responses.auth.RegisterResponseDto;
 import com.example.demo.entities.Account;
 import com.example.demo.entities.User;
 import com.example.demo.exceptions.DuplicateResourceException;
-import com.example.demo.repositories.AccountRepository;
-import com.example.demo.repositories.UserRepository;
+import com.example.demo.repositories.commands.AccountCommandRepository;
+import com.example.demo.repositories.commands.UserCommandRepository;
+import com.example.demo.repositories.queries.AccountQueryRepository;
+import com.example.demo.repositories.queries.UserServiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,17 +30,18 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final AccountRepository accountRepository;
+    private final UserServiceRepository userServiceRepository;
+    private final UserCommandRepository userCommandRepository;
+    private final AccountCommandRepository accountCommandRepository;
+    private final AccountQueryRepository accountQueryRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-    @Transactional
-    @WriteService
+    @Transactional(transactionManager = "writeTransactionManager")
     public RegisterResponseDto register(RegisterRequestDto request) {
 
-        if (accountRepository.existsByEmail(request.getEmail())) {
+        if (accountQueryRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateResourceException("email", "Email này đã được đăng ký");
         }
 
@@ -53,7 +53,7 @@ public class AuthService {
                 .status(AccountStatus.ACTIVE)
                 .build();
 
-        var savedAccount = accountRepository.save(newAccount);
+        var savedAccount = accountCommandRepository.save(newAccount);
 
         var newUser = User.builder()
                 .account(savedAccount)
@@ -64,7 +64,7 @@ public class AuthService {
                 .gender(request.getGender())
                 .build();
 
-        var savedUser = userRepository.save(newUser);
+        var savedUser = userCommandRepository.save(newUser);
 
         return RegisterResponseDto.builder()
                 .userId(savedUser.getId())
@@ -73,6 +73,7 @@ public class AuthService {
                 .build();
     }
 
+    @Transactional(transactionManager = "writeTransactionManager")
     public LoginResponseDto login(LoginRequestDto request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -80,9 +81,9 @@ public class AuthService {
                         request.getPassword()
                 )
         );
-        var account = accountRepository.findByEmail(request.getEmail())
+        var account = accountCommandRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("Account not found"));
-        var user = userRepository.findByAccountId(account.getId())
+        var user = userServiceRepository.findByAccountId(account.getId())
                 .orElseThrow(() -> new UsernameNotFoundException("User details not found"));
 
         var jwtToken = jwtService.generateToken(new org.springframework.security.core.userdetails.User(
@@ -98,7 +99,7 @@ public class AuthService {
 
         // Update refresh token in database
         account.setRefreshToken(refreshToken);
-        accountRepository.save(account);
+        accountCommandRepository.save(account);
 
         return LoginResponseDto.builder()
                 .accessToken(jwtToken)
@@ -115,7 +116,7 @@ public class AuthService {
                 .build();
     }
 
-    @ReadOnlyService
+    @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public RefreshTokenResponseDto refreshToken(RefreshTokenRequestDto request) {
         final String refreshToken = request.getRefreshToken();
         final String userEmail = jwtService.extractUsername(refreshToken);
@@ -124,7 +125,7 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid refresh token: User email not found in token");
         }
 
-        var account = accountRepository.findByEmail(userEmail)
+        var account = accountCommandRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("Account not found with email: " + userEmail));
 
         if (!jwtService.validateRefreshToken(refreshToken) || !refreshToken.equals(account.getRefreshToken())) {
@@ -144,11 +145,11 @@ public class AuthService {
                 .build();
     }
 
-    @Transactional
+    @Transactional(transactionManager = "writeTransactionManager")
     public void logout(String userEmail) {
-        var account = accountRepository.findByEmail(userEmail)
+        var account = accountCommandRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("Account not found with email: " + userEmail));
         account.setRefreshToken(null);
-        accountRepository.save(account);
+        accountCommandRepository.save(account);
     }
 }

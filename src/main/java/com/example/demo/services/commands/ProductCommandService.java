@@ -1,6 +1,5 @@
 package com.example.demo.services.commands;
 
-import com.example.demo.commons.annotations.WriteService;
 import com.example.demo.commons.enums.ProductStatus;
 import com.example.demo.dtos.commands.product.CreateProductRequest;
 import com.example.demo.dtos.commands.product.UpdateProductRequest;
@@ -10,16 +9,20 @@ import com.example.demo.entities.Account;
 import com.example.demo.entities.Brand;
 import com.example.demo.entities.Category;
 import com.example.demo.entities.Product;
+import com.example.demo.events.ProductCreatedEvent;
+import com.example.demo.events.ProductUpdatedEvent;
+import com.example.demo.events.ProductDeletedEvent;
 import com.example.demo.exceptions.DuplicateResourceException;
 import com.example.demo.exceptions.ForbiddenException;
 import com.example.demo.exceptions.ResourceNotFoundException;
-import com.example.demo.repositories.AccountRepository;
-import com.example.demo.repositories.BrandRepository;
-import com.example.demo.repositories.CategoryRepository;
-import com.example.demo.repositories.ProductRepository;
+import com.example.demo.repositories.commands.BrandCommandRepository;
+import com.example.demo.repositories.commands.AccountCommandRepository;
+import com.example.demo.repositories.commands.CategoryCommandRepository;
+import com.example.demo.repositories.commands.ProductCommandRepository;
 import com.example.demo.configs.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,34 +31,34 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class ProductCommandService {
 
-    private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
-    private final BrandRepository brandRepository;
-    private final AccountRepository accountRepository;
+    private final ProductCommandRepository productCommandRepository;
+    private final CategoryCommandRepository categoryCommandRepository;
+    private final BrandCommandRepository brandCommandRepository;
+    private final AccountCommandRepository accountCommandRepository;
     private final ProductMapper productMapper;
     private final SecurityUtils securityUtils;
+    private final RabbitTemplate rabbitTemplate;
 
-    @Transactional
-    @WriteService
+    @Transactional(transactionManager = "writeTransactionManager")
     public CreateProductResponse createProduct(CreateProductRequest request) {
-        log.info("Creating product with name: {}", request.getName());
+        log.info("📝 Creating product with name: {}", request.getName());
 
         // Get current user
         String currentUserEmail = securityUtils.getCurrentUserEmail();
-        Account currentUser = accountRepository.findByEmail(currentUserEmail)
+        Account currentUser = accountCommandRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Check duplicate product name
-        if (productRepository.existsByNameAndDeletedAtIsNull(request.getName())) {
+        if (productCommandRepository.existsByNameAndDeletedAtIsNull(request.getName())) {
             throw new DuplicateResourceException("Product with name '" + request.getName() + "' already exists", "name");
         }
 
         // Validate category exists
-        Category category = categoryRepository.findById(request.getCategoryId())
+        Category category = categoryCommandRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
 
         // Validate brand exists
-        Brand brand = brandRepository.findById(request.getBrandId())
+        Brand brand = brandCommandRepository.findById(request.getBrandId())
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + request.getBrandId()));
 
         // Map request to entity
@@ -69,24 +72,26 @@ public class ProductCommandService {
         // Set default status as PENDING (waiting for admin approval)
         product.setStatus(ProductStatus.PENDING);
 
-        // Save product
-        Product savedProduct = productRepository.save(product);
-        log.info("Product created successfully with id: {} by user: {} and status: PENDING",
+        // Save product to Write DB
+        Product savedProduct = productCommandRepository.save(product);
+        log.info("✅ Product created successfully with id: {} by user: {} and status: PENDING",
                 savedProduct.getId(), currentUserEmail);
+
+        // 📨 Publish ProductCreatedEvent to RabbitMQ
+        publishProductCreatedEvent(savedProduct);
 
         return productMapper.toCreateResponse(savedProduct);
     }
 
-    @Transactional
-    @WriteService
+    @Transactional(transactionManager = "writeTransactionManager")
     public CreateProductResponse updateProduct(Long id, UpdateProductRequest request) {
-        log.info("Updating product with id: {}", id);
+        log.info("✏️  Updating product with id: {}", id);
 
         // Get current user
         String currentUserEmail = securityUtils.getCurrentUserEmail();
 
         // Find product with details to avoid N+1
-        Product product = productRepository.findByIdWithDetails(id)
+        Product product = productCommandRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
         // Check if current user is the creator of this product
@@ -96,20 +101,20 @@ public class ProductCommandService {
         }
 
         // Check duplicate name (excluding current product)
-        if (productRepository.existsByNameAndIdNotAndDeletedAtIsNull(request.getName(), id)) {
+        if (productCommandRepository.existsByNameAndIdNotAndDeletedAtIsNull(request.getName(), id)) {
             throw new DuplicateResourceException("Product with name '" + request.getName() + "' already exists", "name");
         }
 
         // Validate category exists if changed
         if (!product.getCategory().getId().equals(request.getCategoryId())) {
-            Category category = categoryRepository.findById(request.getCategoryId())
+            Category category = categoryCommandRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
             product.setCategory(category);
         }
 
         // Validate brand exists if changed
         if (!product.getBrand().getId().equals(request.getBrandId())) {
-            Brand brand = brandRepository.findById(request.getBrandId())
+            Brand brand = brandCommandRepository.findById(request.getBrandId())
                     .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + request.getBrandId()));
             product.setBrand(brand);
         }
@@ -122,23 +127,25 @@ public class ProductCommandService {
         product.setApprovedAt(null);
         product.setApprovedBy(null);
 
-        // Save updated product
-        Product updatedProduct = productRepository.save(product);
-        log.info("Product updated successfully with id: {} by user: {}, status reset to PENDING",
+        // Save updated product to Write DB
+        Product updatedProduct = productCommandRepository.save(product);
+        log.info("✅ Product updated successfully with id: {} by user: {}, status reset to PENDING",
                 updatedProduct.getId(), currentUserEmail);
+
+        // 📨 Publish ProductUpdatedEvent to RabbitMQ
+        publishProductUpdatedEvent(updatedProduct);
 
         return productMapper.toCreateResponse(updatedProduct);
     }
 
-    @Transactional
-    @WriteService
+    @Transactional(transactionManager = "writeTransactionManager")
     public void deleteProduct(Long id) {
-        log.info("Deleting product with id: {}", id);
+        log.info("🗑️  Deleting product with id: {}", id);
 
         // Get current user
         String currentUserEmail = securityUtils.getCurrentUserEmail();
 
-        Product product = productRepository.findById(id)
+        Product product = productCommandRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
         // Check if current user is the creator of this product
@@ -148,8 +155,119 @@ public class ProductCommandService {
         }
 
         product.softDelete();
-        productRepository.save(product);
+        productCommandRepository.save(product);
 
-        log.info("Product soft deleted successfully with id: {} by user: {}", id, currentUserEmail);
+        log.info("✅ Product soft deleted successfully with id: {} by user: {}", id, currentUserEmail);
+
+        // 📨 Publish ProductDeletedEvent to RabbitMQ
+        publishProductDeletedEvent(product);
+    }
+
+    // ============================================
+    // PRIVATE METHODS - Event Publishing
+    // ============================================
+
+    /**
+     * Publish ProductCreatedEvent to RabbitMQ
+     * This event can trigger:
+     * - Email notification to admin
+     * - Update search index (Elasticsearch)
+     * - Clear cache
+     * - Analytics tracking
+     */
+    private void publishProductCreatedEvent(Product product) {
+        try {
+            ProductCreatedEvent event = ProductCreatedEvent.builder()
+                    .productId(product.getId())
+                    .productName(product.getName())
+                    .status(product.getStatus())
+                    .price(product.getPrice())
+                    .categoryId(product.getCategory().getId())
+                    .categoryName(product.getCategory().getName())
+                    .brandId(product.getBrand().getId())
+                    .brandName(product.getBrand().getName())
+                    .createdBy(product.getCreatedBy() != null ? product.getCreatedBy().getEmail() : null)
+                    .createdAt(product.getCreatedAt())
+                    .build();
+
+            rabbitTemplate.convertAndSend(
+                    "product.exchange",
+                    "product.created",
+                    event
+            );
+
+            log.info("📨 Published ProductCreatedEvent to RabbitMQ for product ID: {}", product.getId());
+        } catch (Exception e) {
+            log.error("❌ Failed to publish ProductCreatedEvent for product ID: {}. Error: {}",
+                    product.getId(), e.getMessage());
+            // Don't throw exception - event publishing failure shouldn't fail the main operation
+            // The data is already saved in Write DB and will be replicated to Read DB
+        }
+    }
+
+    /**
+     * Publish ProductUpdatedEvent to RabbitMQ
+     * This event can trigger:
+     * - Email notification to admin
+     * - Update search index
+     * - Clear cache for this product
+     * - Log audit trail
+     */
+    private void publishProductUpdatedEvent(Product product) {
+        try {
+            ProductUpdatedEvent event = ProductUpdatedEvent.builder()
+                    .productId(product.getId())
+                    .productName(product.getName())
+                    .status(product.getStatus())
+                    .price(product.getPrice())
+                    .categoryId(product.getCategory().getId())
+                    .categoryName(product.getCategory().getName())
+                    .brandId(product.getBrand().getId())
+                    .brandName(product.getBrand().getName())
+                    .updatedBy(product.getCreatedBy() != null ? product.getCreatedBy().getEmail() : null)
+                    .updatedAt(product.getUpdatedAt())
+                    .build();
+
+            rabbitTemplate.convertAndSend(
+                    "product.exchange",
+                    "product.updated",
+                    event
+            );
+
+            log.info("📨 Published ProductUpdatedEvent to RabbitMQ for product ID: {}", product.getId());
+        } catch (Exception e) {
+            log.error("❌ Failed to publish ProductUpdatedEvent for product ID: {}. Error: {}",
+                    product.getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * Publish ProductDeletedEvent to RabbitMQ
+     * This event can trigger:
+     * - Email notification to admin
+     * - Remove from search index
+     * - Clear cache
+     * - Log audit trail
+     */
+    private void publishProductDeletedEvent(Product product) {
+        try {
+            ProductDeletedEvent event = ProductDeletedEvent.builder()
+                    .productId(product.getId())
+                    .productName(product.getName())
+                    .deletedBy(product.getCreatedBy() != null ? product.getCreatedBy().getEmail() : null)
+                    .deletedAt(product.getDeletedAt())
+                    .build();
+
+            rabbitTemplate.convertAndSend(
+                    "product.exchange",
+                    "product.deleted",
+                    event
+            );
+
+            log.info("📨 Published ProductDeletedEvent to RabbitMQ for product ID: {}", product.getId());
+        } catch (Exception e) {
+            log.error("❌ Failed to publish ProductDeletedEvent for product ID: {}. Error: {}",
+                    product.getId(), e.getMessage());
+        }
     }
 }

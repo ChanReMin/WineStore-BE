@@ -1,8 +1,9 @@
 package com.example.demo.controllers;
 
 import com.example.demo.entities.User;
-import com.example.demo.services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.demo.services.commands.UserCommandService;
+import com.example.demo.services.queries.UserQueryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,32 +12,33 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class UserController {
     
-    @Autowired
-    private UserService userService;
-    
+    private final UserQueryService userQueryService;
+    private final UserCommandService userCommandService;
+
     @GetMapping
     public List<User> getAllUsers() {
-        return userService.getAllUsers();
+        return userQueryService.getAllUsers();
     }
     
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id)
+        return userQueryService.getUserById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
     
     @PostMapping
     public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
+        return userCommandService.createUser(user);
     }
     
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
         try {
-            return ResponseEntity.ok(userService.updateUser(id, user));
+            return ResponseEntity.ok(userCommandService.updateUser(id, user));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
@@ -44,12 +46,12 @@ public class UserController {
     
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+        userCommandService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
     
     @GetMapping("/search")
     public List<User> searchUsers(@RequestParam String name) {
-        return userService.searchUsers(name);
+        return userQueryService.searchUsers(name);
     }
 }

@@ -1,20 +1,20 @@
 package com.example.demo.services.queries;
 
-import com.example.demo.commons.annotations.ReadOnlyService;
 import com.example.demo.dtos.responses.brand.BrandResponse;
-import com.example.demo.repositories.BrandRepository;
+import com.example.demo.repositories.queries.BrandQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class BrandQueryService {
-    private final BrandRepository brandRepository;
+    private final BrandQueryRepository brandQueryRepository;
 
-    @ReadOnlyService
+    @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public List<BrandResponse> getAllBrands() {
-        return brandRepository.findAllBrandsWithRequiredFields();
+        return brandQueryRepository.findAllBrandsWithRequiredFields();
     }
 }
