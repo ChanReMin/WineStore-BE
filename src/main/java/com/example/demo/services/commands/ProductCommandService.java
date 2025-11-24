@@ -9,9 +9,6 @@ import com.example.demo.entities.Account;
 import com.example.demo.entities.Brand;
 import com.example.demo.entities.Category;
 import com.example.demo.entities.Product;
-import com.example.demo.events.ProductCreatedEvent;
-import com.example.demo.events.ProductUpdatedEvent;
-import com.example.demo.events.ProductDeletedEvent;
 import com.example.demo.exceptions.DuplicateResourceException;
 import com.example.demo.exceptions.ForbiddenException;
 import com.example.demo.exceptions.ResourceNotFoundException;
@@ -22,7 +19,6 @@ import com.example.demo.repositories.commands.ProductCommandRepository;
 import com.example.demo.configs.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,7 +33,6 @@ public class ProductCommandService {
     private final AccountCommandRepository accountCommandRepository;
     private final ProductMapper productMapper;
     private final SecurityUtils securityUtils;
-    private final RabbitTemplate rabbitTemplate;
 
     @Transactional(transactionManager = "writeTransactionManager")
     public CreateProductResponse createProduct(CreateProductRequest request) {
@@ -76,10 +71,6 @@ public class ProductCommandService {
         Product savedProduct = productCommandRepository.save(product);
         log.info("✅ Product created successfully with id: {} by user: {} and status: PENDING",
                 savedProduct.getId(), currentUserEmail);
-
-        // 📨 Publish ProductCreatedEvent to RabbitMQ
-        publishProductCreatedEvent(savedProduct);
-
         return productMapper.toCreateResponse(savedProduct);
     }
 
@@ -132,8 +123,6 @@ public class ProductCommandService {
         log.info("✅ Product updated successfully with id: {} by user: {}, status reset to PENDING",
                 updatedProduct.getId(), currentUserEmail);
 
-        // 📨 Publish ProductUpdatedEvent to RabbitMQ
-        publishProductUpdatedEvent(updatedProduct);
 
         return productMapper.toCreateResponse(updatedProduct);
     }
@@ -159,115 +148,5 @@ public class ProductCommandService {
 
         log.info("✅ Product soft deleted successfully with id: {} by user: {}", id, currentUserEmail);
 
-        // 📨 Publish ProductDeletedEvent to RabbitMQ
-        publishProductDeletedEvent(product);
-    }
-
-    // ============================================
-    // PRIVATE METHODS - Event Publishing
-    // ============================================
-
-    /**
-     * Publish ProductCreatedEvent to RabbitMQ
-     * This event can trigger:
-     * - Email notification to admin
-     * - Update search index (Elasticsearch)
-     * - Clear cache
-     * - Analytics tracking
-     */
-    private void publishProductCreatedEvent(Product product) {
-        try {
-            ProductCreatedEvent event = ProductCreatedEvent.builder()
-                    .productId(product.getId())
-                    .productName(product.getName())
-                    .status(product.getStatus())
-                    .price(product.getPrice())
-                    .categoryId(product.getCategory().getId())
-                    .categoryName(product.getCategory().getName())
-                    .brandId(product.getBrand().getId())
-                    .brandName(product.getBrand().getName())
-                    .createdBy(product.getCreatedBy() != null ? product.getCreatedBy().getEmail() : null)
-                    .createdAt(product.getCreatedAt())
-                    .build();
-
-            rabbitTemplate.convertAndSend(
-                    "product.exchange",
-                    "product.created",
-                    event
-            );
-
-            log.info("📨 Published ProductCreatedEvent to RabbitMQ for product ID: {}", product.getId());
-        } catch (Exception e) {
-            log.error("❌ Failed to publish ProductCreatedEvent for product ID: {}. Error: {}",
-                    product.getId(), e.getMessage());
-            // Don't throw exception - event publishing failure shouldn't fail the main operation
-            // The data is already saved in Write DB and will be replicated to Read DB
-        }
-    }
-
-    /**
-     * Publish ProductUpdatedEvent to RabbitMQ
-     * This event can trigger:
-     * - Email notification to admin
-     * - Update search index
-     * - Clear cache for this product
-     * - Log audit trail
-     */
-    private void publishProductUpdatedEvent(Product product) {
-        try {
-            ProductUpdatedEvent event = ProductUpdatedEvent.builder()
-                    .productId(product.getId())
-                    .productName(product.getName())
-                    .status(product.getStatus())
-                    .price(product.getPrice())
-                    .categoryId(product.getCategory().getId())
-                    .categoryName(product.getCategory().getName())
-                    .brandId(product.getBrand().getId())
-                    .brandName(product.getBrand().getName())
-                    .updatedBy(product.getCreatedBy() != null ? product.getCreatedBy().getEmail() : null)
-                    .updatedAt(product.getUpdatedAt())
-                    .build();
-
-            rabbitTemplate.convertAndSend(
-                    "product.exchange",
-                    "product.updated",
-                    event
-            );
-
-            log.info("📨 Published ProductUpdatedEvent to RabbitMQ for product ID: {}", product.getId());
-        } catch (Exception e) {
-            log.error("❌ Failed to publish ProductUpdatedEvent for product ID: {}. Error: {}",
-                    product.getId(), e.getMessage());
-        }
-    }
-
-    /**
-     * Publish ProductDeletedEvent to RabbitMQ
-     * This event can trigger:
-     * - Email notification to admin
-     * - Remove from search index
-     * - Clear cache
-     * - Log audit trail
-     */
-    private void publishProductDeletedEvent(Product product) {
-        try {
-            ProductDeletedEvent event = ProductDeletedEvent.builder()
-                    .productId(product.getId())
-                    .productName(product.getName())
-                    .deletedBy(product.getCreatedBy() != null ? product.getCreatedBy().getEmail() : null)
-                    .deletedAt(product.getDeletedAt())
-                    .build();
-
-            rabbitTemplate.convertAndSend(
-                    "product.exchange",
-                    "product.deleted",
-                    event
-            );
-
-            log.info("📨 Published ProductDeletedEvent to RabbitMQ for product ID: {}", product.getId());
-        } catch (Exception e) {
-            log.error("❌ Failed to publish ProductDeletedEvent for product ID: {}. Error: {}",
-                    product.getId(), e.getMessage());
-        }
     }
 }

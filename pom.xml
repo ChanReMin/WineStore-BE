@@ -126,20 +126,20 @@
             <version>11.17.0</version>
         </dependency>
 
-        <!-- ===================================== -->
-        <!-- RabbitMQ for Message Queue (CQRS)     -->
-        <!-- ===================================== -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
-        </dependency>
+<!--        &lt;!&ndash; ===================================== &ndash;&gt;-->
+<!--        &lt;!&ndash; RabbitMQ for Message Queue (CQRS)     &ndash;&gt;-->
+<!--        &lt;!&ndash; ===================================== &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-amqp</artifactId>-->
+<!--        </dependency>-->
 
-        <!-- RabbitMQ Test -->
-        <dependency>
-            <groupId>org.springframework.amqp</groupId>
-            <artifactId>spring-rabbit-test</artifactId>
-            <scope>test</scope>
-        </dependency>
+<!--        &lt;!&ndash; RabbitMQ Test &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.amqp</groupId>-->
+<!--            <artifactId>spring-rabbit-test</artifactId>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
 
         <!-- https://mvnrepository.com/artifact/org.flywaydb/flyway-database-postgresql -->
         <dependency>
