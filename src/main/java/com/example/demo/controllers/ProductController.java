@@ -1,109 +1,143 @@
 package com.example.demo.controllers;
 
-import com.example.demo.dtos.commands.product.CreateProductRequest;
-import com.example.demo.dtos.commands.product.UpdateProductRequest;
+import com.example.demo.dtos.commands.product.WriteProductRequest;
 import com.example.demo.dtos.responses.SuccessResponse;
-import com.example.demo.dtos.responses.product.CreateProductResponse;
-import com.example.demo.dtos.responses.product.ProductResponse;
+import com.example.demo.dtos.responses.product.*;
 import com.example.demo.services.commands.ProductCommandService;
 import com.example.demo.services.queries.ProductQueryService;
+import com.example.demo.services.cloudinary.CloudinaryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
 public class ProductController {
+        private final ProductCommandService productCommandService;
+        private final ProductQueryService productQueryService;
+        private final CloudinaryService cloudinaryService;
 
-    private final ProductCommandService productCommandService;
-    private final ProductQueryService productQueryService;
+        @GetMapping()
+        public ResponseEntity<SuccessResponse<ProductListResponse>> getAllProducts(
+                @RequestParam(defaultValue = "1") Integer page,
+                @RequestParam(defaultValue = "20") Integer limit,
+                @RequestParam(required = false) String search,
+                @RequestParam(name = "category_id", required = false) Long categoryId,
+                @RequestParam(name = "brand_id", required = false) Long brandId,
+                @RequestParam(name = "min_price", required = false) java.math.BigDecimal minPrice,
+                @RequestParam(name = "max_price", required = false) java.math.BigDecimal maxPrice,
+                @RequestParam(name = "in_stock", required = false) Boolean inStock,
+                @RequestParam(required = false) Integer status,
+                @RequestParam(name = "sort_by", required = false) String sortBy,
+                @RequestParam(name = "sort_order", defaultValue = "desc") String sortOrder,
+                @RequestParam(required = false) String view) {
 
-    /**
-     * 1. Lấy danh sách sản phẩm
-     * GET /api/v1/products
-     * Quyền: SELLER
-     */
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
-    @GetMapping
-    public ResponseEntity<SuccessResponse<ProductResponse>> getAllProducts(
-            @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer limit,
-            @RequestParam(required = false) Integer status,
-            @RequestParam(required = false) String search) {
+        ProductListResponse data = productQueryService.getAllProducts(
+                page, limit, search, categoryId, brandId, minPrice, maxPrice,
+                inStock, status, sortBy, sortOrder, view);
 
-        ProductResponse data = productQueryService.getAllProducts(page, limit, status, search);
+                return ResponseEntity.ok(SuccessResponse.<ProductListResponse>builder()
+                        .success(true)
+                        .data(data)
+                        .build());
+        }
 
-        SuccessResponse<ProductResponse> response = SuccessResponse.<ProductResponse>builder()
-                .success(true)
-                .data(data)
-                .message("Product list retrieved successfully.")
-                .build();
+        @GetMapping("/{id}")
+        public ResponseEntity<SuccessResponse<Object>> getProductById(@PathVariable Long id) {
+                Object data = productQueryService.getProductById(id);
 
-        return ResponseEntity.ok(response);
-    }
+                return ResponseEntity.ok(SuccessResponse.builder()
+                        .success(true)
+                        .data(data)
+                        .build());
+        }
+        @GetMapping("/{id}/related")
+        public ResponseEntity<SuccessResponse<Object>> getRelatedProducts(@PathVariable Long id) {
+                Object data = productQueryService.getRelatedProducts(id);
 
-    /**
-     * 2. Tạo sản phẩm mới
-     * POST /api/v1/products
-     * Quyền: SELLER
-     */
-    @PostMapping
-    @PreAuthorize("hasRole('SELLER')")
-    public ResponseEntity<SuccessResponse<CreateProductResponse>> createProduct(
-            @Valid @RequestBody CreateProductRequest request) {
+                return ResponseEntity.ok(SuccessResponse.builder()
+                        .success(true)
+                        .data(data)
+                        .build());
+        }
 
-        CreateProductResponse product = productCommandService.createProduct(request);
+        @PostMapping
+        @PreAuthorize("hasRole('SELLER')")
+        public ResponseEntity<SuccessResponse<WriteProductResponse>> createProduct(
+                @Valid @RequestBody WriteProductRequest request) {
 
-        SuccessResponse<CreateProductResponse> response = SuccessResponse.<CreateProductResponse>builder()
-                .success(true)
-                .message("Product created successfully and is pending admin approval.")
-                .data(product)
-                .build();
+                WriteProductResponse product = productCommandService.createProduct(request);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+                return ResponseEntity.status(HttpStatus.CREATED)
+                        .body(SuccessResponse.<WriteProductResponse>builder()
+                        .success(true)
+                        .message("Tạo sản phẩm thành công. Đang chờ admin duyệt")
+                        .data(product)
+                        .build());
+        }
 
-    /**
-     * 3. Cập nhật sản phẩm
-     * PUT /api/v1/products/{product_id}
-     * Quyền: SELLER
-     */
-    @PutMapping("/{productId}")
-    @PreAuthorize("hasRole('SELLER')")
-    public ResponseEntity<SuccessResponse<CreateProductResponse>> updateProduct(
-            @PathVariable Long productId,
-            @Valid @RequestBody UpdateProductRequest request) {
+        /**
+        * 5. PUT /api/v1/products/{product_id} - Cập nhật sản phẩm (Seller Only)
+        */
+        @PutMapping("/{productId}")
+        @PreAuthorize("hasRole('SELLER')")
+        public ResponseEntity<SuccessResponse<WriteProductResponse>> updateProduct(
+                @PathVariable Long productId,
+                @Valid @RequestBody WriteProductRequest request) {
 
-        CreateProductResponse product = productCommandService.updateProduct(productId, request);
+        WriteProductResponse product = productCommandService.updateProduct(productId, request);
 
-        SuccessResponse<CreateProductResponse> response = SuccessResponse.<CreateProductResponse>builder()
-                .success(true)
-                .message("Product updated successfully and is pending admin re-approval.")
-                .data(product)
-                .build();
+                return ResponseEntity.ok(SuccessResponse.<WriteProductResponse>builder()
+                        .success(true)
+                        .message("Cập nhật sản phẩm thành công")
+                        .data(product)
+                        .build());
+        }
 
-        return ResponseEntity.ok(response);
-    }
+        @DeleteMapping("/{productId}")
+        @PreAuthorize("hasRole('SELLER')")
+        public ResponseEntity<SuccessResponse<Void>> deleteProduct(@PathVariable Long productId) {
+                productCommandService.deleteProduct(productId);
 
-    /**
-     * 4. Xóa sản phẩm
-     * DELETE /api/v1/products/{product_id}
-     * Quyền: SELLER
-     */
-    @DeleteMapping("/{productId}")
-    @PreAuthorize("hasRole('SELLER')")
-    public ResponseEntity<SuccessResponse<Void>> deleteProduct(@PathVariable Long productId) {
-        productCommandService.deleteProduct(productId);
+                return ResponseEntity.ok(SuccessResponse.<Void>builder()
+                        .success(true)
+                        .message("Xóa sản phẩm thành công")
+                        .build());
+        }
 
-        SuccessResponse<Void> response = SuccessResponse.<Void>builder()
-                .success(true)
-                .message("Product deleted successfully.")
-                .build();
+        @PostMapping("/images")
+        @PreAuthorize("hasRole('SELLER')")
+        public ResponseEntity<SuccessResponse<UploadImageResponse>> uploadProductImage(
+                @RequestParam("image") MultipartFile file,
+                @RequestParam(value = "product_id", required = false) Long productId) {
 
-        return ResponseEntity.ok(response);
-    }
+                try {
+                        Map<String, Object> uploadResult = cloudinaryService.uploadImage(file, "src/main/resources/cloudinary");
+
+                        UploadImageResponse response = UploadImageResponse.builder()
+                                .id(productId)
+                                .url((String) uploadResult.get("secure_url"))
+                                .build();
+
+                        return ResponseEntity.ok(SuccessResponse.<UploadImageResponse>builder()
+                                .success(true)
+                                .message("Upload ảnh thành công")
+                                .data(response)
+                                .build());
+                } catch (IOException e) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(SuccessResponse.<UploadImageResponse>builder()
+                                .success(false)
+                                .message("Upload ảnh thất bại: " + e.getMessage())
+                                .build());
+                }
+        }
 }

@@ -1,10 +1,9 @@
 package com.example.demo.services.commands;
 
 import com.example.demo.commons.enums.ProductStatus;
-import com.example.demo.dtos.commands.product.CreateProductRequest;
-import com.example.demo.dtos.commands.product.UpdateProductRequest;
+import com.example.demo.dtos.commands.product.WriteProductRequest;
 import com.example.demo.dtos.mappers.product.ProductMapper;
-import com.example.demo.dtos.responses.product.CreateProductResponse;
+import com.example.demo.dtos.responses.product.WriteProductResponse;
 import com.example.demo.entities.Account;
 import com.example.demo.entities.Brand;
 import com.example.demo.entities.Category;
@@ -35,7 +34,7 @@ public class ProductCommandService {
     private final SecurityUtils securityUtils;
 
     @Transactional(transactionManager = "writeTransactionManager")
-    public CreateProductResponse createProduct(CreateProductRequest request) {
+    public WriteProductResponse createProduct(WriteProductRequest request) {
         log.info("📝 Creating product with name: {}", request.getName());
 
         // Get current user
@@ -75,7 +74,7 @@ public class ProductCommandService {
     }
 
     @Transactional(transactionManager = "writeTransactionManager")
-    public CreateProductResponse updateProduct(Long id, UpdateProductRequest request) {
+    public WriteProductResponse updateProduct(Long id, WriteProductRequest request) {
         log.info("✏️  Updating product with id: {}", id);
 
         // Get current user

@@ -14,7 +14,7 @@ public interface ProductCommandRepository extends JpaRepository<Product, Long>{
 
     boolean existsByNameAndIdNotAndDeletedAtIsNull(String name, Long id);
 
-    @EntityGraph(attributePaths = {"category", "brand", "approvedBy", "createdBy"})
+    @EntityGraph(attributePaths = {"category", "brand"})
     @Query("SELECT p FROM Product p WHERE p.id = :id AND p.deletedAt IS NULL")
     Optional<Product> findByIdWithDetails(@Param("id") Long id);
 }

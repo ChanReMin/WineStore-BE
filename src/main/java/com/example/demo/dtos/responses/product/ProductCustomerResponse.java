@@ -1,0 +1,58 @@
+package com.example.demo.dtos.responses.product;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.*;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ProductCustomerResponse {
+    private Long id;
+    private String name;
+    private String slug;
+    private String description;
+    private BigDecimal price;
+    private BigDecimal originalPrice;
+    private BigDecimal discountPercent;
+    private CategoryInfo category;
+    private BrandInfo brand;
+    private List<ImageInfo> images;
+    private BigDecimal concentration;
+    private Integer volume; // capacity
+    private String originCountry;
+    private Boolean inStock;
+    private BigDecimal ratingAverage;
+    private Integer ratingCount;
+    private Integer soldCount;
+
+    @Getter
+    @Setter
+    @Builder
+    public static class CategoryInfo {
+        private Long id;
+        private String name;
+        private String slug;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    public static class BrandInfo {
+        private Long id;
+        private String name;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    public static class ImageInfo {
+        private String url;
+        private Boolean isPrimary;
+    }
+}

@@ -1,15 +1,14 @@
 package com.example.demo.services.queries;
 
 import com.example.demo.commons.enums.ProductStatus;
+import com.example.demo.configs.SecurityUtils;
 import com.example.demo.dtos.mappers.product.ProductMapper;
-import com.example.demo.dtos.responses.product.ProductListResponse;
-import com.example.demo.dtos.responses.product.ProductResponse;
+import com.example.demo.dtos.responses.product.*;
 import com.example.demo.entities.Account;
 import com.example.demo.entities.Product;
 import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.repositories.queries.AccountQueryRepository;
 import com.example.demo.repositories.queries.ProductQueryRepository;
-import com.example.demo.configs.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,6 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,99 +37,213 @@ public class ProductQueryService {
     private final SecurityUtils securityUtils;
 
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
-    public ProductResponse getAllProducts(Integer page, Integer limit, Integer status, String search) {
-        log.info("Fetching products - page: {}, limit: {}, status: {}, search: {}", page, limit, status, search);
+    public ProductListResponse getAllProducts(
+            Integer page,
+            Integer limit,
+            String search,
+            Long categoryId,
+            Long brandId,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            Boolean inStock,
+            Integer status,
+            String sortBy,
+            String sortOrder,
+            String view) {
 
-        // Get current user email and check role
-        String currentUserEmail = securityUtils.getCurrentUserEmail();
-        boolean isSeller = hasRole("SELLER");
-        boolean isAdmin = hasRole("ADMIN");
+        log.info("Fetching products - page: {}, limit: {}, search: {}", page, limit, search);
 
-        log.info("Current user: {}, isSeller: {}, isAdmin: {}", currentUserEmail, isSeller, isAdmin);
+        // Determine view type (customer vs seller)
+        boolean isSellerView = isSellerView(view);
 
-        // Create pageable with sorting by createdAt DESC
-        Pageable pageable = PageRequest.of(
-                page - 1, // Spring Data JPA uses 0-based indexing
-                limit,
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
+        // Create pageable with sorting
+        Sort sort = createSort(sortBy, sortOrder);
+        Pageable pageable = PageRequest.of(page - 1, Math.min(limit, 100), sort);
 
-        // Convert status code to enum
-        ProductStatus productStatus = status != null ? ProductStatus.fromCode(status) : null;
+        // Convert status code to enum (only for seller view)
+        ProductStatus productStatus = (status != null && isSellerView)
+                ? ProductStatus.fromCode(status) : null;
 
         Page<Product> productPage;
 
-        // Sellers can only view their own products.
-        if (isSeller && !isAdmin) {
+        if (isSellerView && hasRole("SELLER") && !hasRole("ADMIN")) {
+            // Seller view: Only their own products
+            String currentUserEmail = securityUtils.getCurrentUserEmail();
             Account currentUser = accountRepository.findByEmail(currentUserEmail)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
             productPage = productQueryRepository.findAllByCreatedByWithFilters(
-                    currentUser, productStatus, search, pageable);
-
-            log.info("Filtered products for seller: {}", currentUserEmail);
+                    currentUser, productStatus, search, categoryId, brandId,
+                    minPrice, maxPrice, pageable);
+        } else if (isSellerView && hasRole("ADMIN")) {
+            // Admin view: All products
+            productPage = productQueryRepository.findAllWithFilters(
+                    productStatus, search, categoryId, brandId, minPrice, maxPrice, pageable);
+        } else {
+            // Customer/Guest view: Only ACTIVE products
+            productPage = productQueryRepository.findAllActiveProductsWithFilters(
+                    search, categoryId, brandId, minPrice, maxPrice, inStock, pageable);
         }
-        // ADMIN see all product
-        else {
-            productPage = productQueryRepository.findAllWithFilters(productStatus, search, pageable);
-            log.info("Fetching all products for admin");
-        }
 
-        // Map to response
-        List<ProductListResponse> products = productPage.getContent().stream()
-                .map(productMapper::toListResponse)
+        // Map to appropriate response based on view
+        List<Object> products = productPage.getContent().stream()
+                .map(product -> isSellerView
+                        ? productMapper.toSellerResponse(product)
+                        : productMapper.toCustomerResponse(product))
                 .collect(Collectors.toList());
 
         // Build pagination info
-        ProductResponse.PaginationInfo pagination = ProductResponse.PaginationInfo.builder()
+        ProductListResponse.PaginationInfo pagination = ProductListResponse.PaginationInfo.builder()
                 .currentPage(page)
                 .totalPages(productPage.getTotalPages())
                 .totalItems(productPage.getTotalElements())
+                .perPage(limit)
                 .build();
 
-        // Build summary (count by status)
-        Long totalCount, pendingCount, activeCount, bannedCount;
-
-        if (isSeller && !isAdmin) {
-            // Count only seller's products
-            Account currentUser = accountRepository.findByEmail(currentUserEmail)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-            totalCount = productQueryRepository.countByCreatedBy(currentUser);
-            pendingCount = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.PENDING);
-            activeCount = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.ACTIVE);
-            bannedCount = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.BAN);
-        } else {
-            // Count all products for admin
-            totalCount = productQueryRepository.countAllActive();
-            pendingCount = productQueryRepository.countByStatus(ProductStatus.PENDING);
-            activeCount = productQueryRepository.countByStatus(ProductStatus.ACTIVE);
-            bannedCount = productQueryRepository.countByStatus(ProductStatus.BAN);
+        // Build summary (only for seller view)
+        ProductListResponse.ProductSummary summary = null;
+        if (isSellerView) {
+            summary = buildProductSummary();
         }
 
-        ProductResponse.ProductSummary summary = ProductResponse.ProductSummary.builder()
-                .total(totalCount)
-                .pending(pendingCount)
-                .active(activeCount)
-                .banned(bannedCount)
-                .build();
-
-        // Build final response
-        return ProductResponse.builder()
+        return ProductListResponse.builder()
                 .products(products)
                 .pagination(pagination)
                 .summary(summary)
                 .build();
     }
 
+
+    @Transactional(transactionManager = "readTransactionManager", readOnly = true)
+    public Object getProductById(Long productId) {
+        log.info("Fetching product with id: {}", productId);
+
+        Product product = productQueryRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm"));
+
+        boolean isSellerView = isSellerView(null);
+        boolean isOwner = isOwner(product);
+
+        // Customer/Guest view: Only ACTIVE products
+        if (!isSellerView && product.getStatus() != ProductStatus.ACTIVE) {
+            throw new ResourceNotFoundException("Không tìm thấy sản phẩm");
+        }
+
+        // Seller view: Only owner can see
+        if (isSellerView && hasRole("SELLER") && !hasRole("ADMIN") && !isOwner) {
+            throw new ResourceNotFoundException("Không tìm thấy sản phẩm");
+        }
+
+        // Return appropriate response
+        return isSellerView && (isOwner || hasRole("ADMIN"))
+                ? productMapper.toSellerDetailResponse(product)
+                : productMapper.toCustomerDetailResponse(product);
+    }
+
     /**
-     * Helper method to check if current user has a specific role
+     * Get related products (similar products)
      */
-    private boolean hasRole(String role) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
+    @Transactional(transactionManager = "readTransactionManager", readOnly = true)
+    public Object getRelatedProducts(Long productId) {
+        Product product = productQueryRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm"));
+
+        // Find products in same category, excluding current product
+        List<Product> relatedProducts = productQueryRepository
+                .findTop10ByCategoryAndStatusAndIdNotAndDeletedAtIsNull(
+                        product.getCategory(),
+                        ProductStatus.ACTIVE,
+                        productId);
+
+        List<ProductCustomerResponse> products = relatedProducts.stream()
+                .map(productMapper::toCustomerResponse)
+                .collect(Collectors.toList());
+
+        return java.util.Map.of("products", products);
+    }
+
+    // ============= Helper Methods =============
+
+    private Sort createSort(String sortBy, String sortOrder) {
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortOrder)
+                ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+        String sortField = switch (sortBy != null ? sortBy : "created_at") {
+            case "price" -> "price";
+            case "name" -> "name";
+            case "popularity" -> "soldCount";
+            default -> "createdAt";
+        };
+
+        return Sort.by(direction, sortField);
+    }
+
+    private boolean isSellerView(String viewParam) {
+        // Check explicit view parameter
+        if ("seller".equalsIgnoreCase(viewParam)) {
+            return true;
+        }
+        if ("customer".equalsIgnoreCase(viewParam)) {
             return false;
         }
-        return authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_" + role));
+
+        // Check role in token
+        return hasRole("SELLER") || hasRole("ADMIN");
+    }
+
+    private boolean hasRole(String role) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+        return authentication.getAuthorities()
+                .contains(new SimpleGrantedAuthority("ROLE_" + role));
+    }
+
+    private boolean isAuthenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getPrincipal());
+    }
+
+    private boolean isOwner(Product product) {
+        if (product.getCreatedBy() == null) {
+            return false;
+        }
+        try {
+            String currentUserEmail = securityUtils.getCurrentUserEmail();
+            return securityUtils.isOwner(product.getCreatedBy().getEmail());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private ProductListResponse.ProductSummary buildProductSummary() {
+        boolean isSeller = hasRole("SELLER") && !hasRole("ADMIN");
+
+        Long total, pending, active, banned;
+
+        if (isSeller) {
+            String currentUserEmail = securityUtils.getCurrentUserEmail();
+            Account currentUser = accountRepository.findByEmail(currentUserEmail)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            total = productQueryRepository.countByCreatedBy(currentUser);
+            pending = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.PENDING);
+            active = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.ACTIVE);
+            banned = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.BAN);
+        } else {
+            total = productQueryRepository.countAllActive();
+            pending = productQueryRepository.countByStatus(ProductStatus.PENDING);
+            active = productQueryRepository.countByStatus(ProductStatus.ACTIVE);
+            banned = productQueryRepository.countByStatus(ProductStatus.BAN);
+        }
+
+        return ProductListResponse.ProductSummary.builder()
+                .total(total)
+                .pending(pending)
+                .active(active)
+                .banned(banned)
+                .build();
     }
 }

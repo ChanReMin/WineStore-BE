@@ -24,7 +24,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
@@ -36,7 +35,6 @@ public class SecurityConfig {
 
     @Value("${APP_ALLOWED_ORIGINS}")
     private String allowedOrigins;
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -62,12 +60,22 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/v1/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/healthz").permitAll()
-                        .anyRequest().authenticated()
-                )
+                        // Auth endpoints
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        // Swagger UI endpoints
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**")
+                        .permitAll()
+                        // Health check
+                        .requestMatchers("/healthz").permitAll()
+                        // All other requests require authentication
+                        .anyRequest().authenticated())
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -80,7 +88,7 @@ public class SecurityConfig {
 
         List<String> origins = List.of(allowedOrigins.split(","));
         config.setAllowedOrigins(origins);
-        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 

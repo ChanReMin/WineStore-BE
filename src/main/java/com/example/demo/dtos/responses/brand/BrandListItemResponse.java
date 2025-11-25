@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BrandResponse {
+public class BrandListItemResponse {
     private Long id;
     private String name;
     private String country;
-    private String description;
+    private Long productsCount;
 }
