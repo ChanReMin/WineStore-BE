@@ -100,6 +100,11 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+
         <!-- JJWT for JWT Token management -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -118,13 +123,18 @@
             <version>0.10.7</version>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <optional>true</optional>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.flywaydb/flyway-core -->
-        <dependency>
+        <!-- <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
             <version>11.17.0</version>
-        </dependency>
+        </dependency> -->
 
 <!--        &lt;!&ndash; ===================================== &ndash;&gt;-->
 <!--        &lt;!&ndash; RabbitMQ for Message Queue (CQRS)     &ndash;&gt;-->
@@ -142,12 +152,12 @@
 <!--        </dependency>-->
 
         <!-- https://mvnrepository.com/artifact/org.flywaydb/flyway-database-postgresql -->
-        <dependency>
+        <!-- <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
             <version>11.17.0</version>
             <scope>runtime</scope>
-        </dependency>
+        </dependency> -->
     </dependencies>
 
     <build>
