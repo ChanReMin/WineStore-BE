@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -41,7 +41,7 @@ public class RegisterRequestDto {
 
     @JsonProperty("date_of_birth")
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDateTime dateOfBirth;
+    private LocalDate dateOfBirth;
 
     @NotNull(message = "Gender is required")
     private Gender gender;

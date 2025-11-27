@@ -60,7 +60,7 @@ public class AuthService {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .phoneNumber(request.getPhoneNumber())
-                .dateOfBirth(request.getDateOfBirth() != null ? request.getDateOfBirth().toLocalDate() : null)
+                .dateOfBirth(request.getDateOfBirth() != null ? request.getDateOfBirth() : null)
                 .gender(request.getGender())
                 .build();
 
