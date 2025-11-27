@@ -7,6 +7,7 @@ import com.example.demo.dtos.responses.brand.BrandListItemResponse;
 import com.example.demo.entities.Brand;
 import com.example.demo.services.commands.BrandCommandService;
 import com.example.demo.services.queries.BrandQueryService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/brands")
 @RequiredArgsConstructor
+@Tag(name = "Inventory Management")
 public class BrandController {
     private final BrandCommandService brandCommandService;
     private final BrandQueryService brandQueryService;

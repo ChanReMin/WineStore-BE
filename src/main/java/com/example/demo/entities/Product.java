@@ -22,7 +22,7 @@ import java.util.List;
                 @Index(name = "idx_brand_id", columnList = "brand_id"),
                 @Index(name = "idx_wine_type", columnList = "wine_type"),
                 @Index(name = "idx_created_year", columnList = "created_at"),
-                @Index(name = "idx_status", columnList = "status")
+                @Index(name = "idx_description_vector", columnList = "description_vector"),
         })
 @Getter
 @Setter

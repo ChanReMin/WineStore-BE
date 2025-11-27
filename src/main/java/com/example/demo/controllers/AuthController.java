@@ -8,6 +8,7 @@ import com.example.demo.dtos.responses.auth.LoginResponseDto;
 import com.example.demo.dtos.responses.auth.RefreshTokenResponseDto;
 import com.example.demo.dtos.responses.auth.RegisterResponseDto;
 import com.example.demo.services.AuthService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
+@Tag(name = "Auth Management")
 public class AuthController {
 
     private final AuthService authService;

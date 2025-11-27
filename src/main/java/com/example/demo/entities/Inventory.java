@@ -1,5 +1,6 @@
 package com.example.demo.entities;
 
+import com.example.demo.commons.enums.InventoryStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -41,15 +42,42 @@ public class Inventory extends BaseEntity {
     @Column(name = "last_updated_at")
     private LocalDateTime lastUpdatedAt;
 
-//    @PrePersist
-//    @PreUpdate
+    @PrePersist
+    @PreUpdate
     public void updateLastUpdated() {
         this.lastUpdatedAt = LocalDateTime.now();
     }
 
+    /**
+     * Check if inventory is low stock
+     * Low stock = quantity > 0 AND quantity <= safetyStock
+     */
     public boolean isLowStock() {
         return safetyStock != null && quantityOnHand != null
-                && quantityOnHand <= safetyStock;
+                && quantityOnHand > 0 && quantityOnHand <= safetyStock;
+    }
+
+    /**
+     * Check if inventory is out of stock
+     * Out of stock = quantity is null or <= 0
+     */
+    public boolean isOutOfStock() {
+        return quantityOnHand == null || quantityOnHand <= 0;
+    }
+
+    /**
+     * Get current inventory status
+     * @return InventoryStatus enum
+     */
+    public InventoryStatus getStatus() {
+        return InventoryStatus.calculateStatus(quantityOnHand, safetyStock);
+    }
+
+    /**
+     * Get status as string code (for backward compatibility)
+     * @return "in_stock", "low_stock", or "out_of_stock"
+     */
+    public String getStatusCode() {
+        return getStatus().getCode();
     }
 }
-

@@ -23,6 +23,8 @@ public class Brand extends BaseEntity {
     @Column(length = 1000)
     private String description;
 
+    private String slug;
+
     @OneToMany(mappedBy = "brand", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private java.util.List<Product> products;
 }

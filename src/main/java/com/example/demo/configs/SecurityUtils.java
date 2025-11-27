@@ -5,6 +5,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import com.example.demo.configs.security.UserPrincipal; // New import
+
 
 @Component
 public class SecurityUtils {
@@ -51,6 +53,16 @@ public class SecurityUtils {
                 "anonymousUser".equals(authentication.getPrincipal()));
     }
 
+    /**
+     * Lấy UUID của user hiện tại từ Security Context
+     */
+    public static Long getCurrentUserUuid() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal userPrincipal) {
+            return userPrincipal.getId();
+        }
+        return null;
+    }
     public boolean hasRole(String role) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
