@@ -3,6 +3,7 @@ package com.example.demo.controllers;
 import com.example.demo.entities.User;
 import com.example.demo.services.commands.UserCommandService;
 import com.example.demo.services.queries.UserQueryService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,7 @@ import java.util.List;
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
+@Tag(name = "User Management")
 public class UserController {
     
     private final UserQueryService userQueryService;

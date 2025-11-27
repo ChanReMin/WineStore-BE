@@ -1,0 +1,249 @@
+package com.example.demo.controllers;
+
+import com.example.demo.dtos.commands.inventory.CreateInventoryLogRequest;
+import com.example.demo.dtos.commands.inventory.StockTakeRequest;
+import com.example.demo.dtos.commands.inventory.TransferInventoryRequest;
+import com.example.demo.dtos.commands.inventory.UpdateInventoryRequest;
+import com.example.demo.dtos.responses.SuccessResponse;
+import com.example.demo.dtos.responses.inventory.*;
+import com.example.demo.services.commands.InventoryCommandService;
+import com.example.demo.services.commands.InventoryLogCommandService;
+import com.example.demo.services.queries.InventoryLogQueryService;
+import com.example.demo.services.queries.InventoryQueryService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/v1/inventory")
+@RequiredArgsConstructor
+@Tag(name = "Inventory Management")
+public class InventoryController {
+
+    private final InventoryLogCommandService inventoryLogCommandService;
+    private final InventoryLogQueryService inventoryLogQueryService;
+    private final InventoryQueryService inventoryQueryService;
+    private final InventoryCommandService inventoryCommandService;
+
+    /**
+     * API 1: GET /seller/inventory
+     * Danh sách tồn kho
+     *
+     * Query Parameters:
+     * - page: Trang hiện tại (default: 1)
+     * - limit: Số item mỗi trang (default: 20)
+     * - warehouse_id: Lọc theo kho
+     * - product_id: Lọc theo sản phẩm
+     * - status: Lọc theo trạng thái (in_stock, low_stock, out_of_stock)
+     * - search: Tìm kiếm theo tên sản phẩm hoặc SKU
+     */
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @GetMapping
+    public ResponseEntity<SuccessResponse<InventoryListResponse>> getAllInventory(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer limit,
+            @RequestParam(name = "warehouseId", required = false) Long warehouseId,
+            @RequestParam(name = "productId", required = false) Long productId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search) {
+
+        InventoryListResponse data = inventoryQueryService.getAllInventory(
+                page, limit, warehouseId, productId, status, search);
+
+        return ResponseEntity.ok(SuccessResponse.<InventoryListResponse>builder()
+                .success(true)
+                .data(data)
+                .build());
+    }
+
+    /**
+     * API 2: GET /seller/inventory/{inventory_id}
+     * Chi tiết tồn kho
+     */
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @GetMapping("/{inventoryId}")
+    public ResponseEntity<SuccessResponse<InventoryDetailResponse>> getInventoryById(
+            @PathVariable Long inventoryId) {
+
+        InventoryDetailResponse data = inventoryQueryService.getInventoryById(inventoryId);
+
+        return ResponseEntity.ok(SuccessResponse.<InventoryDetailResponse>builder()
+                .success(true)
+                .data(data)
+                .build());
+    }
+
+    /**
+     * Cập nhật số lượng tồn kho (nhập/xuất/điều chỉnh)
+     */
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @PutMapping("/{inventoryId}")
+    public ResponseEntity<SuccessResponse<UpdateInventoryResponse>> updateInventory(
+            @PathVariable Long inventoryId,
+            @Valid @RequestBody UpdateInventoryRequest request) {
+
+        UpdateInventoryResponse data = inventoryCommandService.updateInventory(inventoryId, request);
+
+        return ResponseEntity.ok(SuccessResponse.<UpdateInventoryResponse>builder()
+                .success(true)
+                .message("Update inventory successfully")
+                .data(data)
+                .build());
+    }
+
+    /**
+     * Điều chuyển kho
+     *
+**/
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @PostMapping("/transfer")
+    public ResponseEntity<SuccessResponse<TransferInventoryResponse>> transferInventory(
+            @Valid @RequestBody TransferInventoryRequest request) {
+
+        TransferInventoryResponse data = inventoryCommandService.transferInventory(request);
+
+        return ResponseEntity.ok(SuccessResponse.<TransferInventoryResponse>builder()
+                .success(true)
+                .message("Created inventory transfer successfully")
+                .data(data)
+                .build());
+    }
+
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @PostMapping("/stock-take")
+    public ResponseEntity<SuccessResponse<StockTakeResponse>> stockTake(
+            @Valid @RequestBody StockTakeRequest request) {
+
+        StockTakeResponse data = inventoryCommandService.stockTake(request);
+
+        return ResponseEntity.ok(SuccessResponse.<StockTakeResponse>builder()
+                .success(true)
+                .message("Stock take completed successfully")
+                .data(data)
+                .build());
+    }
+
+
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @GetMapping("/alerts")
+    public ResponseEntity<SuccessResponse<InventoryAlertsResponse>> getInventoryAlerts(
+            @RequestParam(required = false) String type,
+            @RequestParam(name = "warehouse_id", required = false) Long warehouseId) {
+
+        InventoryAlertsResponse data = inventoryQueryService.getInventoryAlerts(type, warehouseId);
+
+        return ResponseEntity.ok(SuccessResponse.<InventoryAlertsResponse>builder()
+                .success(true)
+                .data(data)
+                .build());
+    }
+
+    /**
+     * Lấy lịch sử xuất nhập kho
+     *
+     * Query Parameters:
+     * - page: Trang hiện tại (default: 1)
+     * - limit: Số bản ghi mỗi trang (default: 20, max: 100)
+     * - warehouse_id: Lọc theo kho
+     * - product_id: Lọc theo sản phẩm
+     * - type: Lọc theo loại (in, out, adjust, transfer)
+     * - from_date: Từ ngày (YYYY-MM-DD)
+     * - to_date: Đến ngày (YYYY-MM-DD)
+     */
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @GetMapping("/logs")
+    public ResponseEntity<SuccessResponse<InventoryLogListResponse>> getAllInventoryLogs(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer limit,
+            @RequestParam(name = "warehouse_id", required = false) Long warehouseId,
+            @RequestParam(name = "product_id", required = false) Long productId,
+            @RequestParam(required = false) String type,
+            @RequestParam(name = "from_date", required = false) String fromDate,
+            @RequestParam(name = "to_date", required = false) String toDate) {
+
+        InventoryLogListResponse data = inventoryLogQueryService.getAllInventoryLogs(
+                page, limit, warehouseId, productId, type, fromDate, toDate);
+
+        return ResponseEntity.ok(SuccessResponse.<InventoryLogListResponse>builder()
+                .success(true)
+                .data(data)
+                .build());
+    }
+
+    /**
+     * Lấy chi tiết một inventory log
+     */
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @GetMapping("/{id}")
+    public ResponseEntity<SuccessResponse<InventoryLogResponse>> getInventoryLogById(
+            @PathVariable Long id) {
+
+        InventoryLogResponse data = inventoryLogQueryService.getInventoryLogById(id);
+
+        return ResponseEntity.ok(SuccessResponse.<InventoryLogResponse>builder()
+                .success(true)
+                .data(data)
+                .build());
+    }
+
+    /**
+     * Lấy trạng thái tồn kho
+     *
+     * Query Parameters:
+     * - product_id: ID sản phẩm (required)
+     * - warehouse_id: ID kho (required)
+     */
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @GetMapping("/status")
+    public ResponseEntity<SuccessResponse<InventoryStatusResponse>> getInventoryStatus(
+            @RequestParam(name = "product_id") Long productId,
+            @RequestParam(name = "warehouse_id") Long warehouseId) {
+
+        InventoryStatusResponse data = inventoryLogQueryService.getInventoryStatus(
+                productId, warehouseId);
+
+        return ResponseEntity.ok(SuccessResponse.<InventoryStatusResponse>builder()
+                .success(true)
+                .data(data)
+                .build());
+    }
+
+    /**
+     * Cập nhật số lượng tồn kho (nhập/xuất/điều chỉnh)
+     */
+    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @PostMapping
+    public ResponseEntity<SuccessResponse<InventoryLogResponse>> createInventoryLog(
+            @Valid @RequestBody CreateInventoryLogRequest request) {
+
+        InventoryLogResponse data = inventoryLogCommandService.createInventoryLog(request);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(SuccessResponse.<InventoryLogResponse>builder()
+                        .success(true)
+                        .message("Update inventory log created successfully")
+                        .data(data)
+                        .build());
+    }
+
+    /**
+     * Xóa inventory log (soft delete)
+     * Chỉ ADMIN mới được xóa
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<SuccessResponse<Void>> deleteInventoryLog(
+            @PathVariable Long id) {
+
+        inventoryLogCommandService.deleteInventoryLog(id);
+
+        return ResponseEntity.ok(SuccessResponse.<Void>builder()
+                .success(true)
+                .message("Inventory log deleted successfully")
+                .build());
+    }
+}

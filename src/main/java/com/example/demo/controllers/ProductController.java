@@ -7,6 +7,7 @@ import com.example.demo.dtos.responses.product.CreateProductResponse;
 import com.example.demo.dtos.responses.product.ProductResponse;
 import com.example.demo.services.commands.ProductCommandService;
 import com.example.demo.services.queries.ProductQueryService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
+@Tag(name = "Product Management")
 public class ProductController {
 
     private final ProductCommandService productCommandService;

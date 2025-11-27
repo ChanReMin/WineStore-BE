@@ -1,6 +1,7 @@
 package com.example.demo.configs;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -62,5 +63,11 @@ public class SecurityUtils {
         }
         return null;
     }
-
+    public boolean hasRole(String role) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return false;
+        }
+        return authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_" + role));
+    }
 }
