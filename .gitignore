@@ -33,3 +33,4 @@ sync-initial-data.sh
 target/
 check-replication.sh
 fix-replication.sh
+Dockerfile

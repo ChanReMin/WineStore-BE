@@ -1,3 +1,4 @@
+/*
 package com.example.demo.configs;
 
 import org.flywaydb.core.Flyway;
@@ -35,3 +36,4 @@ public class FlywayConfig {
         return flyway;
     }
 }
+*/

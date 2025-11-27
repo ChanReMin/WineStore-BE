@@ -49,6 +49,9 @@ public class Promotion extends BaseEntity {
     @Column(name = "used_count")
     private Integer usedCount;
 
+    @Column(name = "minimum_order_value", precision = 15, scale = 2)
+    private BigDecimal minimumOrderValue;
+
     @Column(columnDefinition = "SMALLINT")
     private Integer status; // 1=active, 0=inactive
 
