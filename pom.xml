@@ -129,12 +129,12 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.flywaydb/flyway-core -->
-        <!-- <dependency>
+<!--         https://mvnrepository.com/artifact/org.flywaydb/flyway-core -->
+        <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
             <version>11.17.0</version>
-        </dependency> -->
+        </dependency>
 
 <!--        &lt;!&ndash; ===================================== &ndash;&gt;-->
 <!--        &lt;!&ndash; RabbitMQ for Message Queue (CQRS)     &ndash;&gt;-->
@@ -152,12 +152,12 @@
 <!--        </dependency>-->
 
         <!-- https://mvnrepository.com/artifact/org.flywaydb/flyway-database-postgresql -->
-        <!-- <dependency>
+        <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
             <version>11.17.0</version>
             <scope>runtime</scope>
-        </dependency> -->
+        </dependency>
     </dependencies>
 
     <build>
