@@ -2,6 +2,7 @@ package com.example.demo.entities;
 
 import com.example.demo.commons.enums.AccountRole;
 import com.example.demo.commons.enums.AccountStatus;
+import com.example.demo.commons.enums.AuthProvider;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -28,8 +29,15 @@ public class Account {
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "VARCHAR(20)")
+    private AuthProvider provider;
+
+    @Column(name = "provider_id", length = 255)
+    private String providerId;
 
     @Enumerated(EnumType.ORDINAL)
     @Column(columnDefinition = "SMALLINT")
