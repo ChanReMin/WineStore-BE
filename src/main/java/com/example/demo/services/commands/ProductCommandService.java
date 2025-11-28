@@ -1,8 +1,10 @@
 package com.example.demo.services.commands;
 
 import com.example.demo.commons.enums.ProductStatus;
+import com.example.demo.dtos.commands.product.UpdateProductStatusRequest;
 import com.example.demo.dtos.commands.product.WriteProductRequest;
 import com.example.demo.dtos.mappers.product.ProductMapper;
+import com.example.demo.dtos.responses.product.UpdateProductStatusResponse;
 import com.example.demo.dtos.responses.product.WriteProductResponse;
 import com.example.demo.entities.Account;
 import com.example.demo.entities.Brand;
@@ -16,6 +18,7 @@ import com.example.demo.repositories.commands.AccountCommandRepository;
 import com.example.demo.repositories.commands.CategoryCommandRepository;
 import com.example.demo.repositories.commands.ProductCommandRepository;
 import com.example.demo.configs.SecurityUtils;
+import com.example.demo.services.AiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,7 @@ public class ProductCommandService {
     private final CategoryCommandRepository categoryCommandRepository;
     private final BrandCommandRepository brandCommandRepository;
     private final AccountCommandRepository accountCommandRepository;
+    private final AiService aiService;
     private final ProductMapper productMapper;
     private final SecurityUtils securityUtils;
 
@@ -70,6 +74,7 @@ public class ProductCommandService {
         Product savedProduct = productCommandRepository.save(product);
         log.info("✅ Product created successfully with id: {} by user: {} and status: PENDING",
                 savedProduct.getId(), currentUserEmail);
+//        aiService.sendProductToAI(savedProduct.getId());
         return productMapper.toCreateResponse(savedProduct);
     }
 
@@ -121,7 +126,7 @@ public class ProductCommandService {
         Product updatedProduct = productCommandRepository.save(product);
         log.info("✅ Product updated successfully with id: {} by user: {}, status reset to PENDING",
                 updatedProduct.getId(), currentUserEmail);
-
+//        aiService.sendProductToAI(updatedProduct.getId());
 
         return productMapper.toCreateResponse(updatedProduct);
     }
@@ -146,6 +151,44 @@ public class ProductCommandService {
         productCommandRepository.save(product);
 
         log.info("✅ Product soft deleted successfully with id: {} by user: {}", id, currentUserEmail);
+    }
 
+    @Transactional(transactionManager = "writeTransactionManager")
+    public UpdateProductStatusResponse updateProductStatus(Long productId, UpdateProductStatusRequest request) {
+        log.info("🔄 Updating product status - productId: {}, newStatus: {}", productId, request.getStatus());
+
+        // Get current user
+        String currentUserEmail = securityUtils.getCurrentUserEmail();
+
+        // Find product
+        Product product = productCommandRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+
+        // Check if current user is the creator of this product
+        if (product.getCreatedBy() == null ||
+                !securityUtils.isOwner(product.getCreatedBy().getEmail())) {
+            throw new ForbiddenException("You don't have permission to update this product status");
+        }
+
+        // Validate status value (0-2 only, no 3/BANNED via seller endpoint)
+        if (request. getStatus() < 0 || request.getStatus() > 2) {
+            throw new IllegalArgumentException("Invalid status value.  Allowed values: 0 (Pending), 1 (Active), 2 (Inactive)");
+        }
+
+        // Update product status
+        ProductStatus newStatus = ProductStatus.fromCode(request.getStatus());
+        product.setStatus(newStatus);
+
+        // Save updated product
+        Product updatedProduct = productCommandRepository. save(product);
+
+        log.info("✅ Product status updated successfully - productId: {}, status: {} by user: {}",
+                productId, newStatus.getDescription(), currentUserEmail);
+
+        return UpdateProductStatusResponse.builder()
+                .id(updatedProduct.getId())
+                .status(updatedProduct.getStatus(). getCode())
+                .statusText(updatedProduct.getStatus(). getDescription())
+                .build();
     }
 }

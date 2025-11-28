@@ -86,12 +86,6 @@ public class WarehouseQueryService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy kho hàng"));
 
         boolean isAdmin = securityUtils.hasRole("ADMIN");
-        boolean isSeller = securityUtils.hasRole("SELLER");
-
-        // Seller cần validate ownership
-        if (isSeller && !isAdmin) {
-            validateOwnership(warehouse);
-        }
 
         // Trả về response khác nhau tùy role
         if (isAdmin) {

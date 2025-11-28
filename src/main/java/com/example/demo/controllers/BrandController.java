@@ -17,7 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/brands")
 @RequiredArgsConstructor
-@Tag(name = "Inventory Management")
+@Tag(name = "Brands Management")
 public class BrandController {
     private final BrandCommandService brandCommandService;
     private final BrandQueryService brandQueryService;

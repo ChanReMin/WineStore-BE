@@ -41,7 +41,7 @@ public class ProductMapper {
                         .id(product.getBrand().getId())
                         .name(product.getBrand().getName())
                         .build())
-                .images(parseImages(product.getImages()))
+                .images(product.getImages())
                 .concentration(product.getConcentration())
                 .volume(product.getCapacity())
                 .originCountry(product.getCountryOfProduction())
@@ -73,7 +73,7 @@ public class ProductMapper {
                         .name(product.getBrand().getName())
                         .description(product.getBrand().getDescription())
                         .build())
-                .images(parseImages(product.getImages()))
+                .images(product.getImages())
                 .concentration(product.getConcentration())
                 .volume(product.getCapacity())
                 .originCountry(product.getCountryOfProduction())
@@ -113,7 +113,7 @@ public class ProductMapper {
                         .id(product.getBrand().getId())
                         .name(product.getBrand().getName())
                         .build())
-                .images(parseImages(product.getImages()))
+                .images(product.getImages())
                 .concentration(product.getConcentration())
                 .volume(product.getCapacity())
                 .status(product.getStatus() != null ? product.getStatus().getCode() : null)
@@ -151,7 +151,7 @@ public class ProductMapper {
                         .id(product.getBrand().getId())
                         .name(product.getBrand().getName())
                         .build())
-                .images(parseImages(product.getImages()))
+                .images(product.getImages())
                 .concentration(product.getConcentration())
                 .volume(product.getCapacity())
                 .originCountry(product.getCountryOfProduction())
@@ -229,19 +229,6 @@ public class ProductMapper {
                 .replaceAll("[đ]", "d")
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("^-|-$", "");
-    }
-
-    private List<ProductCustomerResponse.ImageInfo> parseImages(String imagesJson) {
-        if (imagesJson == null || imagesJson.isEmpty()) {
-            return new ArrayList<>();
-        }
-        try {
-            return objectMapper.readValue(imagesJson,
-                    new TypeReference<List<ProductCustomerResponse.ImageInfo>>() {});
-        } catch (JsonProcessingException e) {
-            log.warn("Failed to parse images JSON: {}", imagesJson, e);
-            return new ArrayList<>();
-        }
     }
 
     private ProductCustomerDetailResponse.TasteProfile parseTasteProfile(String tasteProfileJson) {

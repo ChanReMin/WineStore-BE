@@ -22,7 +22,7 @@ public class ProductCustomerDetailResponse {
     private BigDecimal originalPrice;
     private ProductCustomerResponse.CategoryInfo category;
     private BrandDetailInfo brand;
-    private List<ProductCustomerResponse.ImageInfo> images;
+    private String images;
     private BigDecimal concentration;
     private Integer volume;
     private String originCountry;

@@ -26,7 +26,7 @@ public class ProductSellerDetailResponse {
     private BigDecimal originalPrice;
     private ProductCustomerResponse.CategoryInfo category;
     private ProductCustomerResponse.BrandInfo brand;
-    private List<ProductCustomerResponse.ImageInfo> images;
+    private String images;
     private BigDecimal concentration;
     private Integer volume;
     private String originCountry;

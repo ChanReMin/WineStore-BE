@@ -22,7 +22,7 @@ public class ProductCustomerResponse {
     private BigDecimal discountPercent;
     private CategoryInfo category;
     private BrandInfo brand;
-    private List<ImageInfo> images;
+    private String images;
     private BigDecimal concentration;
     private Integer volume; // capacity
     private String originCountry;
@@ -46,13 +46,5 @@ public class ProductCustomerResponse {
     public static class BrandInfo {
         private Long id;
         private String name;
-    }
-
-    @Getter
-    @Setter
-    @Builder
-    public static class ImageInfo {
-        private String url;
-        private Boolean isPrimary;
     }
 }

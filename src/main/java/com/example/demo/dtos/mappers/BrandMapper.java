@@ -12,7 +12,6 @@ public class BrandMapper {
                 .id(brand.getId())
                 .name(brand.getName())
                 .country(brand.getCountry())
-                .description(brand.getDescription())
                 .build();
     }
 }

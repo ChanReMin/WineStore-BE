@@ -1,5 +1,6 @@
 package com.example.demo.controllers;
 
+import com.example.demo.dtos.commands.product.UpdateProductStatusRequest;
 import com.example.demo.dtos.commands.product.WriteProductRequest;
 import com.example.demo.dtos.responses.SuccessResponse;
 import com.example.demo.dtos.responses.product.*;
@@ -139,5 +140,20 @@ public class ProductController {
                                 .message("Upload ảnh thất bại: " + e.getMessage())
                                 .build());
                 }
+        }
+
+        @PutMapping("/{productId}/status")
+        @PreAuthorize("hasRole('SELLER')")
+        public ResponseEntity<SuccessResponse<UpdateProductStatusResponse>> updateProductStatus(
+                @PathVariable Long productId,
+                @Valid @RequestBody UpdateProductStatusRequest request) {
+
+                UpdateProductStatusResponse response = productCommandService.updateProductStatus(productId, request);
+
+                return ResponseEntity.ok(SuccessResponse.<UpdateProductStatusResponse>builder()
+                        .success(true)
+                        .message("Cập nhật trạng thái thành công")
+                        .data(response)
+                        .build());
         }
 }
