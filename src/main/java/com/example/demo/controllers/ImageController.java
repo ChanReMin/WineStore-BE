@@ -26,12 +26,9 @@ public class ImageController {
         }
 
         // Upload to Cloudinary
-        Map<String, Object> result = cloudinaryService.uploadImage(image, "products");
+        String result = cloudinaryService.uploadImage(image);
 
         // Return secure URL
-        return ResponseEntity.ok(Map.of(
-                "url", result.get("secure_url"),
-                "public_id", result.get("public_id")
-        ));
+        return ResponseEntity.ok(result);
     }
 }

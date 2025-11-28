@@ -4,50 +4,53 @@ import com.example.demo.dtos.commands.product.UpdateProductStatusRequest;
 import com.example.demo.dtos.commands.product.WriteProductRequest;
 import com.example.demo.dtos.responses.SuccessResponse;
 import com.example.demo.dtos.responses.product.*;
+import com.example.demo.services.cloudinary.CloudinaryService;
 import com.example.demo.services.commands.ProductCommandService;
 import com.example.demo.services.queries.ProductQueryService;
-import com.example.demo.services.cloudinary.CloudinaryService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Map;
 
 @RestController
+@Slf4j
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
+@Tag(name = "Products Management")
 public class ProductController {
         private final ProductCommandService productCommandService;
         private final ProductQueryService productQueryService;
-        private final CloudinaryService cloudinaryService;
 
         @GetMapping()
         public ResponseEntity<SuccessResponse<ProductListResponse>> getAllProducts(
-                @RequestParam(defaultValue = "1") Integer page,
-                @RequestParam(defaultValue = "20") Integer limit,
+                @RequestParam(required = false, defaultValue = "1") Integer page,
+                @RequestParam(required = false, defaultValue = "10") Integer limit,
                 @RequestParam(required = false) String search,
-                @RequestParam(name = "category_id", required = false) Long categoryId,
-                @RequestParam(name = "brand_id", required = false) Long brandId,
-                @RequestParam(name = "min_price", required = false) java.math.BigDecimal minPrice,
-                @RequestParam(name = "max_price", required = false) java.math.BigDecimal maxPrice,
-                @RequestParam(name = "in_stock", required = false) Boolean inStock,
                 @RequestParam(required = false) Integer status,
-                @RequestParam(name = "sort_by", required = false) String sortBy,
-                @RequestParam(name = "sort_order", defaultValue = "desc") String sortOrder,
-                @RequestParam(required = false) String view) {
+                @RequestParam(required = false) Long categoryId,
+                @RequestParam(required = false) Long brandId,
+                @RequestParam(required = false) BigDecimal priceFrom,
+                @RequestParam(required = false) BigDecimal priceTo,
+                @RequestParam(required = false) BigDecimal concentrationFrom,
+                @RequestParam(required = false) BigDecimal concentrationTo) {
 
-        ProductListResponse data = productQueryService.getAllProducts(
-                page, limit, search, categoryId, brandId, minPrice, maxPrice,
-                inStock, status, sortBy, sortOrder, view);
+                ProductListResponse response = productQueryService.getAllProducts(
+                        page, limit, search, status, categoryId, brandId,
+                        priceFrom, priceTo, concentrationFrom, concentrationTo);
 
                 return ResponseEntity.ok(SuccessResponse.<ProductListResponse>builder()
                         .success(true)
-                        .data(data)
+                        .data(response)
                         .build());
         }
 
@@ -70,17 +73,19 @@ public class ProductController {
                         .build());
         }
 
-        @PostMapping
         @PreAuthorize("hasRole('SELLER')")
+        @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
         public ResponseEntity<SuccessResponse<WriteProductResponse>> createProduct(
-                @Valid @RequestBody WriteProductRequest request) {
+                @Valid @ModelAttribute WriteProductRequest request) {
+
+                log.info("📝 Creating product: {}", request.getName());
 
                 WriteProductResponse product = productCommandService.createProduct(request);
 
                 return ResponseEntity.status(HttpStatus.CREATED)
                         .body(SuccessResponse.<WriteProductResponse>builder()
                         .success(true)
-                        .message("Tạo sản phẩm thành công. Đang chờ admin duyệt")
+                        .message("Product created successfully. Awaiting admin approval")
                         .data(product)
                         .build());
         }
@@ -88,71 +93,43 @@ public class ProductController {
         /**
         * 5. PUT /api/v1/products/{product_id} - Cập nhật sản phẩm (Seller Only)
         */
-        @PutMapping("/{productId}")
+        @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
         @PreAuthorize("hasRole('SELLER')")
         public ResponseEntity<SuccessResponse<WriteProductResponse>> updateProduct(
-                @PathVariable Long productId,
-                @Valid @RequestBody WriteProductRequest request) {
+                @PathVariable Long id,
+                @Valid @ModelAttribute WriteProductRequest request) {
 
-        WriteProductResponse product = productCommandService.updateProduct(productId, request);
+        WriteProductResponse product = productCommandService.updateProduct(id, request);
 
                 return ResponseEntity.ok(SuccessResponse.<WriteProductResponse>builder()
                         .success(true)
-                        .message("Cập nhật sản phẩm thành công")
+                        .message("Product updated successfully")
                         .data(product)
                         .build());
         }
 
-        @DeleteMapping("/{productId}")
+        @DeleteMapping("/{id}")
         @PreAuthorize("hasRole('SELLER')")
-        public ResponseEntity<SuccessResponse<Void>> deleteProduct(@PathVariable Long productId) {
-                productCommandService.deleteProduct(productId);
+        public ResponseEntity<SuccessResponse<Void>> deleteProduct(@PathVariable Long id) {
+                productCommandService.deleteProduct(id);
 
                 return ResponseEntity.ok(SuccessResponse.<Void>builder()
                         .success(true)
-                        .message("Xóa sản phẩm thành công")
+                        .message("Product deleted successfully")
                         .build());
         }
 
-        @PostMapping("/images")
-        @PreAuthorize("hasRole('SELLER')")
-        public ResponseEntity<SuccessResponse<UploadImageResponse>> uploadProductImage(
-                @RequestParam("image") MultipartFile file,
-                @RequestParam(value = "product_id", required = false) Long productId) {
-
-                try {
-                        Map<String, Object> uploadResult = cloudinaryService.uploadImage(file, "src/main/resources/cloudinary");
-
-                        UploadImageResponse response = UploadImageResponse.builder()
-                                .id(productId)
-                                .url((String) uploadResult.get("secure_url"))
-                                .build();
-
-                        return ResponseEntity.ok(SuccessResponse.<UploadImageResponse>builder()
-                                .success(true)
-                                .message("Upload ảnh thành công")
-                                .data(response)
-                                .build());
-                } catch (IOException e) {
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body(SuccessResponse.<UploadImageResponse>builder()
-                                .success(false)
-                                .message("Upload ảnh thất bại: " + e.getMessage())
-                                .build());
-                }
-        }
-
-        @PutMapping("/{productId}/status")
-        @PreAuthorize("hasRole('SELLER')")
+        @PutMapping("/{id}/status")
+        @PreAuthorize("hasRole('ADMIN')")
         public ResponseEntity<SuccessResponse<UpdateProductStatusResponse>> updateProductStatus(
-                @PathVariable Long productId,
+                @PathVariable Long id,
                 @Valid @RequestBody UpdateProductStatusRequest request) {
 
-                UpdateProductStatusResponse response = productCommandService.updateProductStatus(productId, request);
+                UpdateProductStatusResponse response = productCommandService.updateProductStatus(id, request);
 
                 return ResponseEntity.ok(SuccessResponse.<UpdateProductStatusResponse>builder()
                         .success(true)
-                        .message("Cập nhật trạng thái thành công")
+                        .message("Update product status successfully")
                         .data(response)
                         .build());
         }

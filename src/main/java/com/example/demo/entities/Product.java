@@ -142,9 +142,6 @@ public class Product extends BaseEntity {
     @Column(name = "meta_title", length = 200)
     private String metaTitle;
 
-    @Column(name = "meta_description", length = 500)
-    private String metaDescription;
-
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
 

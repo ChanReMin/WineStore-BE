@@ -32,30 +32,10 @@ public class ProductSellerDetailResponse {
     private String originCountry;
     private Integer status;
     private String statusText;
-    private List<InventoryInfo> inventory;
     private Integer totalInventory;
     private Integer soldCount;
     private BigDecimal ratingAverage;
-    private SeoInfo seo;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime approvedAt;
-
-    @Getter
-    @Setter
-    @Builder
-    public static class InventoryInfo {
-        private Long warehouseId;
-        private String warehouseName;
-        private Integer quantity;
-        private Integer safetyStock;
-    }
-
-    @Getter
-    @Setter
-    @Builder
-    public static class SeoInfo {
-        private String metaTitle;
-        private String metaDescription;
-    }
 }

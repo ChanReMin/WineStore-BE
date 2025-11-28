@@ -55,6 +55,7 @@ public class WarehouseCommandService {
                 .name(request.getName())
                 .location(request.getLocation())
                 .description(request.getDescription())
+                .city(request.getCity())
                 .status(ProductStatus.PENDING)
                 .createdBy(currentAccount)
                 .build();

@@ -36,29 +36,41 @@ public class ProductQueryService {
     private final ProductMapper productMapper;
     private final SecurityUtils securityUtils;
 
+    /**
+     * Get all products with filters
+     * Query Parameters theo API doc:
+     * - page, limit: phân trang
+     * - search: tìm kiếm theo tên, brand, category
+     * - status: lọc theo trạng thái (1: Pending, 2: Active, 3: Banned)
+     * - categoryId, brandId: lọc theo danh mục, thương hiệu
+     * - priceFrom, priceTo: lọc theo khoảng giá
+     * - concentrationFrom, concentrationTo: lọc theo nồng độ
+     */
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public ProductListResponse getAllProducts(
             Integer page,
             Integer limit,
             String search,
+            Integer status,
             Long categoryId,
             Long brandId,
-            BigDecimal minPrice,
-            BigDecimal maxPrice,
-            Boolean inStock,
-            Integer status,
-            String sortBy,
-            String sortOrder,
-            String view) {
+            BigDecimal priceFrom,
+            BigDecimal priceTo,
+            BigDecimal concentrationFrom,
+            BigDecimal concentrationTo) {
 
-        log.info("Fetching products - page: {}, limit: {}, search: {}", page, limit, search);
+        log.info("📋 Fetching products - page: {}, limit: {}, search: {}, status: {}",
+                page, limit, search, status);
 
-        // Determine view type (customer vs seller)
-        boolean isSellerView = isSellerView(view);
+        // Set defaults
+        page = (page != null && page > 0) ? page : 1;
+        limit = (limit != null && limit > 0) ? Math.min(limit, 100) : 10;
 
-        // Create pageable with sorting
-        Sort sort = createSort(sortBy, sortOrder);
-        Pageable pageable = PageRequest.of(page - 1, Math.min(limit, 100), sort);
+        // Create pageable with default sorting (newest first)
+        Pageable pageable = PageRequest.of(page - 1, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // Determine if seller view (authenticated seller) or customer view
+        boolean isSellerView = isAuthenticated() && (hasRole("SELLER") || hasRole("ADMIN"));
 
         // Convert status code to enum (only for seller view)
         ProductStatus productStatus = (status != null && isSellerView)
@@ -74,15 +86,17 @@ public class ProductQueryService {
 
             productPage = productQueryRepository.findAllByCreatedByWithFilters(
                     currentUser, productStatus, search, categoryId, brandId,
-                    minPrice, maxPrice, pageable);
+                    priceFrom, priceTo, concentrationFrom, concentrationTo, pageable);
         } else if (isSellerView && hasRole("ADMIN")) {
             // Admin view: All products
             productPage = productQueryRepository.findAllWithFilters(
-                    productStatus, search, categoryId, brandId, minPrice, maxPrice, pageable);
+                    productStatus, search, categoryId, brandId,
+                    priceFrom, priceTo, concentrationFrom, concentrationTo, pageable);
         } else {
             // Customer/Guest view: Only ACTIVE products
             productPage = productQueryRepository.findAllActiveProductsWithFilters(
-                    search, categoryId, brandId, minPrice, maxPrice, inStock, pageable);
+                    search, categoryId, brandId, priceFrom, priceTo,
+                    concentrationFrom, concentrationTo, pageable);
         }
 
         // Map to appropriate response based on view
@@ -113,15 +127,14 @@ public class ProductQueryService {
                 .build();
     }
 
-
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public Object getProductById(Long productId) {
-        log.info("Fetching product with id: {}", productId);
+        log.info("🔍 Fetching product with id: {}", productId);
 
         Product product = productQueryRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm"));
 
-        boolean isSellerView = isSellerView(null);
+        boolean isSellerView = isAuthenticated() && (hasRole("SELLER") || hasRole("ADMIN"));
         boolean isOwner = isOwner(product);
 
         // Customer/Guest view: Only ACTIVE products
@@ -163,33 +176,6 @@ public class ProductQueryService {
     }
 
     // ============= Helper Methods =============
-
-    private Sort createSort(String sortBy, String sortOrder) {
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortOrder)
-                ? Sort.Direction.ASC : Sort.Direction.DESC;
-
-        String sortField = switch (sortBy != null ? sortBy : "created_at") {
-            case "price" -> "price";
-            case "name" -> "name";
-            case "popularity" -> "soldCount";
-            default -> "createdAt";
-        };
-
-        return Sort.by(direction, sortField);
-    }
-
-    private boolean isSellerView(String viewParam) {
-        // Check explicit view parameter
-        if ("seller".equalsIgnoreCase(viewParam)) {
-            return true;
-        }
-        if ("customer".equalsIgnoreCase(viewParam)) {
-            return false;
-        }
-
-        // Check role in token
-        return hasRole("SELLER") || hasRole("ADMIN");
-    }
 
     private boolean hasRole(String role) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

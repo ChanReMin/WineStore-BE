@@ -22,16 +22,22 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
 
     /**
      * Find products by seller with filters
+     * Added concentrationFrom and concentrationTo filters
      */
     @EntityGraph(attributePaths = {"category", "brand", "approvedBy", "createdBy", "inventories"})
     @Query("SELECT p FROM Product p " +
             "WHERE p.createdBy = :createdBy " +
             "AND (:status IS NULL OR p.status = :status) " +
-            "AND (:search IS NULL OR :search = '' OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "AND (:search IS NULL OR :search = '' OR " +
+            "     LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "     LOWER(p.category.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "     LOWER(p.brand.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
             "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
             "AND (:brandId IS NULL OR p.brand.id = :brandId) " +
-            "AND (:minPrice IS NULL OR p.price >= :minPrice) " +
-            "AND (:maxPrice IS NULL OR p.price <= :maxPrice) " +
+            "AND (:priceFrom IS NULL OR p.price >= :priceFrom) " +
+            "AND (:priceTo IS NULL OR p.price <= :priceTo) " +
+            "AND (:concentrationFrom IS NULL OR p.concentration >= :concentrationFrom) " +
+            "AND (:concentrationTo IS NULL OR p.concentration <= :concentrationTo) " +
             "AND p.deletedAt IS NULL")
     Page<Product> findAllByCreatedByWithFilters(
             @Param("createdBy") Account createdBy,
@@ -39,8 +45,10 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
             @Param("search") String search,
             @Param("categoryId") Long categoryId,
             @Param("brandId") Long brandId,
-            @Param("minPrice") BigDecimal minPrice,
-            @Param("maxPrice") BigDecimal maxPrice,
+            @Param("priceFrom") BigDecimal priceFrom,
+            @Param("priceTo") BigDecimal priceTo,
+            @Param("concentrationFrom") BigDecimal concentrationFrom,
+            @Param("concentrationTo") BigDecimal concentrationTo,
             Pageable pageable
     );
 
@@ -48,23 +56,31 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
 
     /**
      * Find all products with filters (Admin view)
+     * Added concentrationFrom and concentrationTo filters
      */
     @EntityGraph(attributePaths = {"category", "brand", "approvedBy", "createdBy", "inventories"})
     @Query("SELECT p FROM Product p " +
             "WHERE (:status IS NULL OR p.status = :status) " +
-            "AND (:search IS NULL OR :search = '' OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "AND (:search IS NULL OR :search = '' OR " +
+            "     LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "     LOWER(p.category.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "     LOWER(p.brand.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
             "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
             "AND (:brandId IS NULL OR p.brand.id = :brandId) " +
-            "AND (:minPrice IS NULL OR p.price >= :minPrice) " +
-            "AND (:maxPrice IS NULL OR p.price <= :maxPrice) " +
+            "AND (:priceFrom IS NULL OR p.price >= :priceFrom) " +
+            "AND (:priceTo IS NULL OR p.price <= :priceTo) " +
+            "AND (:concentrationFrom IS NULL OR p.concentration >= :concentrationFrom) " +
+            "AND (:concentrationTo IS NULL OR p.concentration <= :concentrationTo) " +
             "AND p.deletedAt IS NULL")
     Page<Product> findAllWithFilters(
             @Param("status") ProductStatus status,
             @Param("search") String search,
             @Param("categoryId") Long categoryId,
             @Param("brandId") Long brandId,
-            @Param("minPrice") BigDecimal minPrice,
-            @Param("maxPrice") BigDecimal maxPrice,
+            @Param("priceFrom") BigDecimal priceFrom,
+            @Param("priceTo") BigDecimal priceTo,
+            @Param("concentrationFrom") BigDecimal concentrationFrom,
+            @Param("concentrationTo") BigDecimal concentrationTo,
             Pageable pageable
     );
 
@@ -72,26 +88,30 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
 
     /**
      * Find active products for customers (only ACTIVE status)
+     * Added concentrationFrom and concentrationTo filters
      */
     @EntityGraph(attributePaths = {"category", "brand", "inventories"})
     @Query("SELECT p FROM Product p " +
             "WHERE p.status = com.example.demo.commons.enums.ProductStatus.ACTIVE " +
-            "AND (:search IS NULL OR :search = '' OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "AND (:search IS NULL OR :search = '' OR " +
+            "     LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "     LOWER(p.category.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "     LOWER(p.brand.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
             "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
             "AND (:brandId IS NULL OR p.brand.id = :brandId) " +
-            "AND (:minPrice IS NULL OR p.price >= :minPrice) " +
-            "AND (:maxPrice IS NULL OR p.price <= :maxPrice) " +
-            "AND (:inStock IS NULL OR :inStock = FALSE OR EXISTS (" +
-            "    SELECT 1 FROM Inventory i WHERE i.product = p AND i.quantityOnHand > 0" +
-            ")) " +
+            "AND (:priceFrom IS NULL OR p.price >= :priceFrom) " +
+            "AND (:priceTo IS NULL OR p.price <= :priceTo) " +
+            "AND (:concentrationFrom IS NULL OR p.concentration >= :concentrationFrom) " +
+            "AND (:concentrationTo IS NULL OR p.concentration <= :concentrationTo) " +
             "AND p.deletedAt IS NULL")
     Page<Product> findAllActiveProductsWithFilters(
             @Param("search") String search,
             @Param("categoryId") Long categoryId,
             @Param("brandId") Long brandId,
-            @Param("minPrice") BigDecimal minPrice,
-            @Param("maxPrice") BigDecimal maxPrice,
-            @Param("inStock") Boolean inStock,
+            @Param("priceFrom") BigDecimal priceFrom,
+            @Param("priceTo") BigDecimal priceTo,
+            @Param("concentrationFrom") BigDecimal concentrationFrom,
+            @Param("concentrationTo") BigDecimal concentrationTo,
             Pageable pageable
     );
 

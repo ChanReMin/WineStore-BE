@@ -10,6 +10,7 @@ import com.example.demo.entities.Account;
 import com.example.demo.entities.Brand;
 import com.example.demo.entities.Category;
 import com.example.demo.entities.Product;
+import com.example.demo.exceptions.BadRequestException;
 import com.example.demo.exceptions.DuplicateResourceException;
 import com.example.demo.exceptions.ForbiddenException;
 import com.example.demo.exceptions.ResourceNotFoundException;
@@ -19,6 +20,7 @@ import com.example.demo.repositories.commands.CategoryCommandRepository;
 import com.example.demo.repositories.commands.ProductCommandRepository;
 import com.example.demo.configs.SecurityUtils;
 import com.example.demo.services.AiService;
+import com.example.demo.services.cloudinary.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,12 +36,13 @@ public class ProductCommandService {
     private final BrandCommandRepository brandCommandRepository;
     private final AccountCommandRepository accountCommandRepository;
     private final AiService aiService;
+    private final CloudinaryService cloudinaryService;
     private final ProductMapper productMapper;
     private final SecurityUtils securityUtils;
 
     @Transactional(transactionManager = "writeTransactionManager")
     public WriteProductResponse createProduct(WriteProductRequest request) {
-        log.info("📝 Creating product with name: {}", request.getName());
+        log.info("🆕 Creating product with name: {}", request.getName());
 
         // Get current user
         String currentUserEmail = securityUtils.getCurrentUserEmail();
@@ -59,28 +62,44 @@ public class ProductCommandService {
         Brand brand = brandCommandRepository.findById(request.getBrandId())
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + request.getBrandId()));
 
+        // Validate image file first (quick validation)
+        if (request.getImage() == null || request.getImage().isEmpty()) {
+            throw new IllegalArgumentException("Product image is required");
+        }
+
         // Map request to entity
         Product product = productMapper.toEntity(request);
         product.setCategory(category);
         product.setBrand(brand);
 
+        // Set placeholder image URL (will be updated asynchronously)
+        product.setImages(cloudinaryService.getPlaceholderUrl());
         // Set creator
         product.setCreatedBy(currentUser);
 
         // Set default status as PENDING (waiting for admin approval)
         product.setStatus(ProductStatus.PENDING);
 
-        // Save product to Write DB
+        // Save product to Write DB FIRST (fast response)
         Product savedProduct = productCommandRepository.save(product);
         log.info("✅ Product created successfully with id: {} by user: {} and status: PENDING",
                 savedProduct.getId(), currentUserEmail);
-//        aiService.sendProductToAI(savedProduct.getId());
+
+        // Upload image asynchronously (non-blocking)
+        cloudinaryService.uploadImageAsync(savedProduct.getId(), request.getImage())
+                .thenAccept(imageUrl -> log.info("✅ Async image upload completed for product {}: {}",
+                        savedProduct.getId(), imageUrl))
+                .exceptionally(ex -> {
+                    log.error("❌ Async image upload failed for product {}", savedProduct.getId(), ex);
+                    return null;
+                });
+
         return productMapper.toCreateResponse(savedProduct);
     }
 
     @Transactional(transactionManager = "writeTransactionManager")
     public WriteProductResponse updateProduct(Long id, WriteProductRequest request) {
-        log.info("✏️  Updating product with id: {}", id);
+        log.info("✏️ Updating product with id: {}", id);
 
         // Get current user
         String currentUserEmail = securityUtils.getCurrentUserEmail();
@@ -93,6 +112,11 @@ public class ProductCommandService {
         if (product.getCreatedBy() == null ||
                 !securityUtils.isOwner(product.getCreatedBy().getEmail())) {
             throw new ForbiddenException("You don't have permission to update this product");
+        }
+
+        // Only allow update for PENDING or ACTIVE status
+        if (product.getStatus() != ProductStatus.PENDING && product.getStatus() != ProductStatus.ACTIVE) {
+            throw new IllegalStateException("Cannot update product with status: " + product.getStatus().getDescription());
         }
 
         // Check duplicate name (excluding current product)
@@ -122,11 +146,47 @@ public class ProductCommandService {
         product.setApprovedAt(null);
         product.setApprovedBy(null);
 
-        // Save updated product to Write DB
+        // Save updated product to Write DB FIRST (fast response)
         Product updatedProduct = productCommandRepository.save(product);
         log.info("✅ Product updated successfully with id: {} by user: {}, status reset to PENDING",
                 updatedProduct.getId(), currentUserEmail);
-//        aiService.sendProductToAI(updatedProduct.getId());
+
+        // Handle image update asynchronously if new image provided
+        if (request.getImage() != null && !request.getImage().isEmpty()) {
+            String oldImageUrl = product.getImages();
+
+            // Set placeholder immediately
+            updatedProduct.setImages(cloudinaryService.getPlaceholderUrl());
+            productCommandRepository.save(updatedProduct);
+
+            // Upload new image asynchronously
+            cloudinaryService.uploadImageAsync(updatedProduct.getId(), request.getImage())
+                    .thenAccept(newImageUrl -> {
+                        log.info("✅ Async image update completed for product {}: {}",
+                                updatedProduct.getId(), newImageUrl);
+
+                        // Delete old image after successful upload
+                        if (oldImageUrl != null && !oldImageUrl.contains("placeholder")) {
+                            cloudinaryService.deleteImage(oldImageUrl);
+                        }
+                    })
+                    .exceptionally(ex -> {
+                        log.error("❌ Async image update failed for product {}", updatedProduct.getId(), ex);
+
+                        // Restore old image on failure
+                        try {
+                            Product p = productCommandRepository.findById(updatedProduct.getId()).orElse(null);
+                            if (p != null) {
+                                p.setImages(oldImageUrl != null ? oldImageUrl :
+                                        "https://via.placeholder.com/800x800?text=Upload+Failed");
+                                productCommandRepository.save(p);
+                            }
+                        } catch (Exception e) {
+                            log.error("Failed to restore old image", e);
+                        }
+                        return null;
+                    });
+        }
 
         return productMapper.toCreateResponse(updatedProduct);
     }

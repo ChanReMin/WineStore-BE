@@ -2,9 +2,9 @@ package com.example.demo.dtos.commands.product;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Getter
 @Setter
@@ -12,23 +12,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class WriteProductRequest {
-
-    @NotBlank(message = "Product name is required")
-    @Size(max = 300, message = "Name must not exceed 300 characters")
-    private String name;
-
-    @Size(max = 100, message = "SKU must not exceed 100 characters")
-    private String sku;
-
-    @NotBlank(message = "Description is required")
-    private String description;
-
-    @NotNull(message = "Price is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
-    private BigDecimal price;
-
-    @DecimalMin(value = "0.0", message = "Cost price must be positive")
-    private BigDecimal costPrice;
 
     @NotNull(message = "Category ID is required")
     @Min(value = 1, message = "Category ID must be positive")
@@ -38,13 +21,49 @@ public class WriteProductRequest {
     @Min(value = 1, message = "Brand ID must be positive")
     private Long brandId;
 
+    @NotBlank(message = "Product name is required")
+    @Size(min = 3, max = 255, message = "Name must be between 3 and 255 characters")
+    private String name;
+
+    @NotNull(message = "Price is required")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
+    private BigDecimal price;
+
+    @NotBlank(message = "Wine type is required")
+    private String winetype;
+
+    @NotBlank(message = "Country of production is required")
+    private String countryOfProduction;
+
+    private String grapeVariety;
+
     @DecimalMin(value = "0.0", message = "Concentration must be positive")
     @DecimalMax(value = "100.0", message = "Concentration cannot exceed 100%")
     private BigDecimal concentration;
 
-    @Min(value = 0, message = "Volume must be positive")
-    private Integer volume;
+    private String productionArea;
 
-    @Size(max = 1000, message = "Images must not exceed 1000 characters")
-    private String images;
+    @Min(value = 0, message = "Capacity must be positive")
+    private Integer capacity;
+
+    private String idealtemperature;
+
+    private String humidity;
+
+    private String avoidLight;
+
+    private String placeTheBottleHorizontally;
+
+    private String avoidVibration;
+
+    private String openedWine;
+
+    private String useWineCabinet;
+
+    // Single image file upload
+    @NotNull(message = "Product image is required")
+    private MultipartFile image;
+
+    @Size(max = 5000, message = "Description must not exceed 5000 characters")
+    private String description;
 }

@@ -32,7 +32,7 @@ public class AuthController {
         var data = authService.register(request);
         SuccessResponse<RegisterResponseDto> response = SuccessResponse.<RegisterResponseDto>builder()
                 .success(true)
-                .message("Đăng ký thành công")
+                .message("Registered Successfully")
                 .data(data)
                 .build();
         return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -43,7 +43,7 @@ public class AuthController {
         var data = authService.login(request);
         SuccessResponse<LoginResponseDto> response = SuccessResponse.<LoginResponseDto>builder()
                 .success(true)
-                .message("Đăng nhập thành công")
+                .message("Login Successful")
                 .data(data)
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -54,7 +54,7 @@ public class AuthController {
         var data = authService.refreshToken(request);
         SuccessResponse<RefreshTokenResponseDto> response = SuccessResponse.<RefreshTokenResponseDto>builder()
                 .success(true)
-                .message("Làm mới token thành công")
+                .message("Refresh Token Successful")
                 .data(data)
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -67,7 +67,7 @@ public class AuthController {
 
         SuccessResponse<Void> response = SuccessResponse.<Void>builder()
                 .success(true)
-                .message("Đăng xuất thành công")
+                .message("Logout Successful")
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

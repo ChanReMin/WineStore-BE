@@ -157,14 +157,9 @@ public class ProductMapper {
                 .originCountry(product.getCountryOfProduction())
                 .status(product.getStatus() != null ? product.getStatus().getCode() : null)
                 .statusText(product.getStatus() != null ? product.getStatus().getDescription() : null)
-                .inventory(buildInventoryInfo(product))
                 .totalInventory(product.getTotalInventory())
                 .soldCount(product.getSoldCount())
                 .ratingAverage(product.getRatingAverage())
-                .seo(ProductSellerDetailResponse.SeoInfo.builder()
-                        .metaTitle(product.getMetaTitle())
-                        .metaDescription(product.getMetaDescription())
-                        .build())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .approvedAt(product.getApprovedAt())
@@ -178,13 +173,19 @@ public class ProductMapper {
         return Product.builder()
                 .name(request.getName())
                 .slug(generateSlug(request.getName()))
-                .sku(request.getSku())
                 .description(request.getDescription())
                 .price(request.getPrice())
-                .costPrice(request.getCostPrice())
+                .wineType(request.getWinetype())
+                .countryOfProduction(request.getCountryOfProduction())
+                .grapeVariety(request.getGrapeVariety())
+                .productionArea(request.getProductionArea())
+                .idealTemperature(request.getIdealtemperature())
+                .humidity(request.getHumidity())
+                .avoidVibration(request.getAvoidVibration())
+                .placeTheBottleHorizontally(request.getPlaceTheBottleHorizontally())
+                .openedWine(request.getOpenedWine())
+                .useWineCabinet(request.getUseWineCabinet())
                 .concentration(request.getConcentration())
-                .images(request.getImages())
-                .capacity(request.getVolume())
                 .ratingAverage(java.math.BigDecimal.ZERO)
                 .ratingCount(0)
                 .soldCount(0)
@@ -196,12 +197,20 @@ public class ProductMapper {
 
         product.setName(request.getName());
         product.setSlug(generateSlug(request.getName()));
-        product.setSku(request.getSku());
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
-        product.setCostPrice(request.getCostPrice());
         product.setConcentration(request.getConcentration());
-        product.setImages(request.getImages());
+        product.setWineType(request.getWinetype());
+        product.setCountryOfProduction(request.getCountryOfProduction());
+        product.setGrapeVariety(request.getGrapeVariety());
+        product.setProductionArea(request.getProductionArea());
+        product.setIdealTemperature(request.getIdealtemperature());
+        product.setHumidity(request.getHumidity());
+        product.setAvoidLight(request.getAvoidLight());
+        product.setPlaceTheBottleHorizontally(request.getPlaceTheBottleHorizontally());
+        product.setAvoidVibration(request.getAvoidVibration());
+        product.setOpenedWine(request.getOpenedWine());
+        product.setUseWineCabinet(request.getUseWineCabinet());
     }
 
     public WriteProductResponse toCreateResponse(Product product) {
@@ -254,21 +263,6 @@ public class ProductMapper {
             log.warn("Failed to parse food pairing JSON: {}", foodPairingJson, e);
             return new ArrayList<>();
         }
-    }
-
-    private List<ProductSellerDetailResponse.InventoryInfo> buildInventoryInfo(Product product) {
-        if (product.getInventories() == null || product.getInventories().isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        return product.getInventories().stream()
-                .map(inv -> ProductSellerDetailResponse.InventoryInfo.builder()
-                        .warehouseId(inv.getWarehouse() != null ? inv.getWarehouse().getId() : null)
-                        .warehouseName(inv.getWarehouse() != null ? inv.getWarehouse().getName() : null)
-                        .quantity(inv.getQuantityOnHand())
-                        .safetyStock(inv.getSafetyStock())
-                        .build())
-                .collect(java.util.stream.Collectors.toList());
     }
 
     private ProductCustomerDetailResponse.SellerInfo buildSellerInfo(Product product) {
