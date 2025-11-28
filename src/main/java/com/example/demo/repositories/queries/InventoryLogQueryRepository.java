@@ -91,7 +91,11 @@ public interface InventoryLogQueryRepository extends JpaRepository<InventoryLog,
     @Query("SELECT il FROM InventoryLog il " +
             "WHERE il.product.id = :productId " +
             "AND il.warehouse.id = :warehouseId " +
-            "AND il.type IN ('IN', 'RETURN', 'TRANSFER_IN') " +
+            "AND il.type IN (" +
+            "   com.example.demo.commons.enums.InventoryLogType.IN, " +
+            "   com.example.demo.commons.enums.InventoryLogType.RETURN, " +
+            "   com.example.demo.commons.enums.InventoryLogType.TRANSFER_IN" +
+            ") " +
             "AND il.deletedAt IS NULL " +
             "ORDER BY il.createdAt DESC")
     Optional<InventoryLog> findLastStockIn(
@@ -99,19 +103,24 @@ public interface InventoryLogQueryRepository extends JpaRepository<InventoryLog,
             @Param("warehouseId") Long warehouseId
     );
 
+
     /**
      * Get last stock OUT for a product in warehouse
      */
     @Query("SELECT il FROM InventoryLog il " +
             "WHERE il.product.id = :productId " +
             "AND il.warehouse.id = :warehouseId " +
-            "AND il.type IN ('OUT', 'TRANSFER_OUT') " +
+            "AND il.type IN (" +
+            "   com.example.demo.commons.enums.InventoryLogType.OUT, " +
+            "   com.example.demo.commons.enums.InventoryLogType.TRANSFER_OUT" +
+            ") " +
             "AND il.deletedAt IS NULL " +
             "ORDER BY il.createdAt DESC")
     Optional<InventoryLog> findLastStockOut(
             @Param("productId") Long productId,
             @Param("warehouseId") Long warehouseId
     );
+
 
     @EntityGraph(attributePaths = {"product", "user"})
     @Query("SELECT il FROM InventoryLog il " +

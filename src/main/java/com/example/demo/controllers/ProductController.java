@@ -1,111 +1,136 @@
 package com.example.demo.controllers;
 
-import com.example.demo.dtos.commands.product.CreateProductRequest;
-import com.example.demo.dtos.commands.product.UpdateProductRequest;
+import com.example.demo.dtos.commands.product.UpdateProductStatusRequest;
+import com.example.demo.dtos.commands.product.WriteProductRequest;
 import com.example.demo.dtos.responses.SuccessResponse;
-import com.example.demo.dtos.responses.product.CreateProductResponse;
-import com.example.demo.dtos.responses.product.ProductResponse;
+import com.example.demo.dtos.responses.product.*;
+import com.example.demo.services.cloudinary.CloudinaryService;
 import com.example.demo.services.commands.ProductCommandService;
 import com.example.demo.services.queries.ProductQueryService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Map;
 
 @RestController
+@Slf4j
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
-@Tag(name = "Product Management")
+@Tag(name = "Products Management")
 public class ProductController {
+        private final ProductCommandService productCommandService;
+        private final ProductQueryService productQueryService;
 
-    private final ProductCommandService productCommandService;
-    private final ProductQueryService productQueryService;
+        @GetMapping()
+        public ResponseEntity<SuccessResponse<ProductListResponse>> getAllProducts(
+                @RequestParam(required = false, defaultValue = "1") Integer page,
+                @RequestParam(required = false, defaultValue = "10") Integer limit,
+                @RequestParam(required = false) String search,
+                @RequestParam(required = false) Integer status,
+                @RequestParam(required = false) Long categoryId,
+                @RequestParam(required = false) Long brandId,
+                @RequestParam(required = false) BigDecimal priceFrom,
+                @RequestParam(required = false) BigDecimal priceTo,
+                @RequestParam(required = false) BigDecimal concentrationFrom,
+                @RequestParam(required = false) BigDecimal concentrationTo) {
 
-    /**
-     * 1. Lấy danh sách sản phẩm
-     * GET /api/v1/products
-     * Quyền: SELLER
-     */
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
-    @GetMapping
-    public ResponseEntity<SuccessResponse<ProductResponse>> getAllProducts(
-            @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer limit,
-            @RequestParam(required = false) Integer status,
-            @RequestParam(required = false) String search) {
+                ProductListResponse response = productQueryService.getAllProducts(
+                        page, limit, search, status, categoryId, brandId,
+                        priceFrom, priceTo, concentrationFrom, concentrationTo);
 
-        ProductResponse data = productQueryService.getAllProducts(page, limit, status, search);
+                return ResponseEntity.ok(SuccessResponse.<ProductListResponse>builder()
+                        .success(true)
+                        .data(response)
+                        .build());
+        }
 
-        SuccessResponse<ProductResponse> response = SuccessResponse.<ProductResponse>builder()
-                .success(true)
-                .data(data)
-                .message("Product list retrieved successfully.")
-                .build();
+        @GetMapping("/{id}")
+        public ResponseEntity<SuccessResponse<Object>> getProductById(@PathVariable Long id) {
+                Object data = productQueryService.getProductById(id);
 
-        return ResponseEntity.ok(response);
-    }
+                return ResponseEntity.ok(SuccessResponse.builder()
+                        .success(true)
+                        .data(data)
+                        .build());
+        }
+        @GetMapping("/{id}/related")
+        public ResponseEntity<SuccessResponse<Object>> getRelatedProducts(@PathVariable Long id) {
+                Object data = productQueryService.getRelatedProducts(id);
 
-    /**
-     * 2. Tạo sản phẩm mới
-     * POST /api/v1/products
-     * Quyền: SELLER
-     */
-    @PostMapping
-    @PreAuthorize("hasRole('SELLER')")
-    public ResponseEntity<SuccessResponse<CreateProductResponse>> createProduct(
-            @Valid @RequestBody CreateProductRequest request) {
+                return ResponseEntity.ok(SuccessResponse.builder()
+                        .success(true)
+                        .data(data)
+                        .build());
+        }
 
-        CreateProductResponse product = productCommandService.createProduct(request);
+        @PreAuthorize("hasRole('SELLER')")
+        @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        public ResponseEntity<SuccessResponse<WriteProductResponse>> createProduct(
+                @Valid @ModelAttribute WriteProductRequest request) {
 
-        SuccessResponse<CreateProductResponse> response = SuccessResponse.<CreateProductResponse>builder()
-                .success(true)
-                .message("Product created successfully and is pending admin approval.")
-                .data(product)
-                .build();
+                log.info("📝 Creating product: {}", request.getName());
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+                WriteProductResponse product = productCommandService.createProduct(request);
 
-    /**
-     * 3. Cập nhật sản phẩm
-     * PUT /api/v1/products/{product_id}
-     * Quyền: SELLER
-     */
-    @PutMapping("/{productId}")
-    @PreAuthorize("hasRole('SELLER')")
-    public ResponseEntity<SuccessResponse<CreateProductResponse>> updateProduct(
-            @PathVariable Long productId,
-            @Valid @RequestBody UpdateProductRequest request) {
+                return ResponseEntity.status(HttpStatus.CREATED)
+                        .body(SuccessResponse.<WriteProductResponse>builder()
+                        .success(true)
+                        .message("Product created successfully. Awaiting admin approval")
+                        .data(product)
+                        .build());
+        }
 
-        CreateProductResponse product = productCommandService.updateProduct(productId, request);
+        /**
+        * 5. PUT /api/v1/products/{product_id} - Cập nhật sản phẩm (Seller Only)
+        */
+        @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        @PreAuthorize("hasRole('SELLER')")
+        public ResponseEntity<SuccessResponse<WriteProductResponse>> updateProduct(
+                @PathVariable Long id,
+                @Valid @ModelAttribute WriteProductRequest request) {
 
-        SuccessResponse<CreateProductResponse> response = SuccessResponse.<CreateProductResponse>builder()
-                .success(true)
-                .message("Product updated successfully and is pending admin re-approval.")
-                .data(product)
-                .build();
+        WriteProductResponse product = productCommandService.updateProduct(id, request);
 
-        return ResponseEntity.ok(response);
-    }
+                return ResponseEntity.ok(SuccessResponse.<WriteProductResponse>builder()
+                        .success(true)
+                        .message("Product updated successfully")
+                        .data(product)
+                        .build());
+        }
 
-    /**
-     * 4. Xóa sản phẩm
-     * DELETE /api/v1/products/{product_id}
-     * Quyền: SELLER
-     */
-    @DeleteMapping("/{productId}")
-    @PreAuthorize("hasRole('SELLER')")
-    public ResponseEntity<SuccessResponse<Void>> deleteProduct(@PathVariable Long productId) {
-        productCommandService.deleteProduct(productId);
+        @DeleteMapping("/{id}")
+        @PreAuthorize("hasRole('SELLER')")
+        public ResponseEntity<SuccessResponse<Void>> deleteProduct(@PathVariable Long id) {
+                productCommandService.deleteProduct(id);
 
-        SuccessResponse<Void> response = SuccessResponse.<Void>builder()
-                .success(true)
-                .message("Product deleted successfully.")
-                .build();
+                return ResponseEntity.ok(SuccessResponse.<Void>builder()
+                        .success(true)
+                        .message("Product deleted successfully")
+                        .build());
+        }
 
-        return ResponseEntity.ok(response);
-    }
+        @PutMapping("/{id}/status")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<SuccessResponse<UpdateProductStatusResponse>> updateProductStatus(
+                @PathVariable Long id,
+                @Valid @RequestBody UpdateProductStatusRequest request) {
+
+                UpdateProductStatusResponse response = productCommandService.updateProductStatus(id, request);
+
+                return ResponseEntity.ok(SuccessResponse.<UpdateProductStatusResponse>builder()
+                        .success(true)
+                        .message("Update product status successfully")
+                        .data(response)
+                        .build());
+        }
 }

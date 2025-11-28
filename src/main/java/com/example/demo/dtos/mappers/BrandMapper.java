@@ -1,18 +1,17 @@
 package com.example.demo.dtos.mappers;
 
 import com.example.demo.entities.Brand;
-import com.example.demo.dtos.responses.brand.BrandResponse;
+import com.example.demo.dtos.responses.brand.BrandListItemResponse;
 
 public class BrandMapper {
 
-    public static BrandResponse toResponse(Brand brand) {
+    public static BrandListItemResponse toResponse(Brand brand) {
         if (brand == null) return null;
 
-        return BrandResponse.builder()
+        return BrandListItemResponse.builder()
                 .id(brand.getId())
                 .name(brand.getName())
                 .country(brand.getCountry())
-                .description(brand.getDescription())
                 .build();
     }
 }

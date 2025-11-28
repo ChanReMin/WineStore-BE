@@ -13,6 +13,7 @@ public class CreateWarehouseResponse {
     private String location;
     private String description;
     private Integer status;
+    private String city;
     private Long managerId;
     private LocalDateTime createdAt;
 }

@@ -38,7 +38,7 @@ public class WarehouseController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(SuccessResponse.<CreateWarehouseResponse>builder()
                         .success(true)
-                        .message("Yêu cầu tạo kho đã được gửi, chờ admin phê duyệt")
+                        .message("Request to create warehouse submitted successfully, pending approval")
                         .data(data)
                         .build());
     }
@@ -99,7 +99,7 @@ public class WarehouseController {
 
         return ResponseEntity.ok(SuccessResponse.<UpdateWarehouseResponse>builder()
                 .success(true)
-                .message("Cập nhật kho thành công")
+                .message("Update warehouse request submitted successfully")
                 .data(data)
                 .build());
     }
@@ -113,7 +113,7 @@ public class WarehouseController {
 
         return ResponseEntity.ok(SuccessResponse.<Void>builder()
                 .success(true)
-                .message("Đã xóa yêu cầu tạo kho")
+                .message("Delete warehouse request submitted successfully")
                 .build());
     }
 
@@ -127,7 +127,7 @@ public class WarehouseController {
 
         return ResponseEntity.ok(SuccessResponse.<ApproveWarehouseResponse>builder()
                 .success(true)
-                .message("Đã phê duyệt kho thành công")
+                .message("Approved warehouse creation request successfully")
                 .data(data)
                 .build());
     }
@@ -142,7 +142,7 @@ public class WarehouseController {
 
         return ResponseEntity.ok(SuccessResponse.<RejectWarehouseResponse>builder()
                 .success(true)
-                .message("Đã từ chối yêu cầu tạo kho")
+                .message("Rejected warehouse creation request successfully")
                 .data(data)
                 .build());
     }
@@ -157,7 +157,7 @@ public class WarehouseController {
 
         return ResponseEntity.ok(SuccessResponse.<BanWarehouseResponse>builder()
                 .success(true)
-                .message("Đã khóa kho thành công")
+                .message("Locked warehouse successfully")
                 .data(data)
                 .build());
     }
@@ -173,7 +173,7 @@ public class WarehouseController {
 
         return ResponseEntity.ok(SuccessResponse.<UnBanWarehouseResponse>builder()
                 .success(true)
-                .message("Đã kích hoạt lại kho thành công")
+                .message("Activated warehouse successfully")
                 .data(data)
                 .build());
     }

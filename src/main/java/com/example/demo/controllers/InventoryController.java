@@ -29,18 +29,6 @@ public class InventoryController {
     private final InventoryQueryService inventoryQueryService;
     private final InventoryCommandService inventoryCommandService;
 
-    /**
-     * API 1: GET /seller/inventory
-     * Danh sách tồn kho
-     *
-     * Query Parameters:
-     * - page: Trang hiện tại (default: 1)
-     * - limit: Số item mỗi trang (default: 20)
-     * - warehouse_id: Lọc theo kho
-     * - product_id: Lọc theo sản phẩm
-     * - status: Lọc theo trạng thái (in_stock, low_stock, out_of_stock)
-     * - search: Tìm kiếm theo tên sản phẩm hoặc SKU
-     */
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @GetMapping
     public ResponseEntity<SuccessResponse<InventoryListResponse>> getAllInventory(
@@ -60,10 +48,6 @@ public class InventoryController {
                 .build());
     }
 
-    /**
-     * API 2: GET /seller/inventory/{inventory_id}
-     * Chi tiết tồn kho
-     */
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @GetMapping("/{inventoryId}")
     public ResponseEntity<SuccessResponse<InventoryDetailResponse>> getInventoryById(
@@ -77,9 +61,6 @@ public class InventoryController {
                 .build());
     }
 
-    /**
-     * Cập nhật số lượng tồn kho (nhập/xuất/điều chỉnh)
-     */
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @PutMapping("/{inventoryId}")
     public ResponseEntity<SuccessResponse<UpdateInventoryResponse>> updateInventory(
@@ -159,11 +140,11 @@ public class InventoryController {
     public ResponseEntity<SuccessResponse<InventoryLogListResponse>> getAllInventoryLogs(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer limit,
-            @RequestParam(name = "warehouse_id", required = false) Long warehouseId,
-            @RequestParam(name = "product_id", required = false) Long productId,
+            @RequestParam(name = "warehouseId", required = false) Long warehouseId,
+            @RequestParam(name = "productId", required = false) Long productId,
             @RequestParam(required = false) String type,
-            @RequestParam(name = "from_date", required = false) String fromDate,
-            @RequestParam(name = "to_date", required = false) String toDate) {
+            @RequestParam(name = "fromDate", required = false) String fromDate,
+            @RequestParam(name = "toDate", required = false) String toDate) {
 
         InventoryLogListResponse data = inventoryLogQueryService.getAllInventoryLogs(
                 page, limit, warehouseId, productId, type, fromDate, toDate);
@@ -174,21 +155,6 @@ public class InventoryController {
                 .build());
     }
 
-    /**
-     * Lấy chi tiết một inventory log
-     */
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
-    @GetMapping("/{id}")
-    public ResponseEntity<SuccessResponse<InventoryLogResponse>> getInventoryLogById(
-            @PathVariable Long id) {
-
-        InventoryLogResponse data = inventoryLogQueryService.getInventoryLogById(id);
-
-        return ResponseEntity.ok(SuccessResponse.<InventoryLogResponse>builder()
-                .success(true)
-                .data(data)
-                .build());
-    }
 
     /**
      * Lấy trạng thái tồn kho

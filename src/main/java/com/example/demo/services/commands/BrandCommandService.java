@@ -1,7 +1,7 @@
 package com.example.demo.services.commands;
 
 import com.example.demo.dtos.mappers.BrandMapper;
-import com.example.demo.dtos.responses.brand.BrandResponse;
+import com.example.demo.dtos.responses.brand.BrandListItemResponse;
 import com.example.demo.entities.Brand;
 import com.example.demo.repositories.commands.BrandCommandRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ public class BrandCommandService {
     private final BrandCommandRepository brandCommandRepository;
 
     @Transactional(transactionManager = "writeTransactionManager")
-    public BrandResponse createBrand(Brand brand) {
+    public BrandListItemResponse createBrand(Brand brand) {
         Brand savedBrand = brandCommandRepository.save(brand);
         return BrandMapper.toResponse(savedBrand);
     }
