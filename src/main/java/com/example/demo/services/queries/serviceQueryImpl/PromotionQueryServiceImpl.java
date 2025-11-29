@@ -76,14 +76,18 @@ public class PromotionQueryServiceImpl {
                         .orElse(null); // If account not found for email (shouldn't happen if authenticated), return no promotions
                 if (currentSellerAccount != null) {
                     Long currentSellerAccountId = currentSellerAccount.getId();
-                    // Join from Promotion to PromotionProduct
-                    Join<Promotion, PromotionProduct> promotionProductJoin = root.join("promotionProducts", JoinType.INNER);
+                    Join<Promotion, PromotionProduct> promotionProductJoin = root.join("promotionProducts", JoinType.LEFT);
                     // Join from PromotionProduct to Product
-                    Join<PromotionProduct, Product> productJoin = promotionProductJoin.join("product", JoinType.INNER);
+                    Join<PromotionProduct, Product> productJoin = promotionProductJoin.join("product", JoinType.LEFT);
                     // Join from Product to Account (createdBy)
-                    Join<Product, Account> productCreatorAccountJoin = productJoin.join("createdBy", JoinType.INNER);
+                    Join<Product, Account> productCreatorAccountJoin = productJoin.join("createdBy", JoinType.LEFT);
 
-                    predicates.add(criteriaBuilder.equal(productCreatorAccountJoin.get("id"), currentSellerAccountId));
+                    predicates.add(
+                            criteriaBuilder.or(
+                                    criteriaBuilder.equal(root.get("createdBy").get("id"), currentSellerAccountId),
+                                    criteriaBuilder.equal(productCreatorAccountJoin.get("id"), currentSellerAccountId)
+                            )
+                    );
                 } else {
                     // If authenticated but account not found, ensure no promotions are returned
                     predicates.add(criteriaBuilder.disjunction()); // Always false predicate
