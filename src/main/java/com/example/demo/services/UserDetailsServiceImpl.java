@@ -30,7 +30,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return accountCommandRepository.findByEmail(email)
-                .map(account -> UserPrincipal.create(account))  // <--- IMPORTANT
+                .map(UserPrincipal::create)
                 .orElseThrow(() -> new UsernameNotFoundException("Account not found with email: " + email));
     }
 }
