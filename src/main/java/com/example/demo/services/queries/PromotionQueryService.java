@@ -1,6 +1,6 @@
 package com.example.demo.services.queries;
 
-import com.example.demo.configs.SecurityUtils;
+
 import com.example.demo.dtos.mappers.promotion.PromotionMapper;
 import com.example.demo.dtos.responses.promotion.PromotionDetailResponse;
 import com.example.demo.dtos.responses.promotion.PromotionListResponse;
@@ -14,6 +14,7 @@ import com.example.demo.exceptions.ForbiddenException;
 import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.repositories.queries.AccountQueryRepository; // Import AccountQueryRepository
 import com.example.demo.repositories.queries.PromotionQueryRepository;
+import com.example.demo.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

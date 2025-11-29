@@ -1,7 +1,7 @@
 package com.example.demo.services.commands;
 
 import com.example.demo.commons.enums.DiscountType;
-import com.example.demo.configs.SecurityUtils;
+
 import com.example.demo.dtos.commands.promotion.CreatePromotionRequest;
 import com.example.demo.dtos.commands.promotion.ExportPromotionStatisticsRequest;
 import com.example.demo.dtos.commands.promotion.TogglePromotionStatusRequest; // Import this
@@ -23,6 +23,7 @@ import com.example.demo.repositories.queries.CategoryQueryRepository;
 import com.example.demo.repositories.queries.ProductQueryRepository;
 import com.example.demo.repositories.queries.PromotionQueryRepository;
 import com.example.demo.dtos.mappers.promotion.PromotionMapper;
+import com.example.demo.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
