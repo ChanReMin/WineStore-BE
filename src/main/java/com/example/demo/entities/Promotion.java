@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -58,6 +59,15 @@ public class Promotion extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private Account createdBy;
+
+    public void addPromotionProduct(PromotionProduct promotionProduct) {
+        if (promotionProducts == null) {
+            promotionProducts = new ArrayList<>();
+        }
+
+        promotionProducts.add(promotionProduct);
+        promotionProduct.setPromotion(this);
+    }
 
     public boolean isActive() {
         if (status == null || status != 1) return false;
