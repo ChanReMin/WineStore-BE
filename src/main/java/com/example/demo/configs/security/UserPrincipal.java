@@ -28,8 +28,11 @@ public class UserPrincipal implements OAuth2User, UserDetails {
     }
 
     public static UserPrincipal create(Account account) {
-        List<GrantedAuthority> authorities = Collections.
-                singletonList(new SimpleGrantedAuthority(account.getRole().name()));
+        String roleName = account.getRole() != null ? account.getRole().name() : "UNKNOWN";
+
+        List<GrantedAuthority> authorities = Collections.singletonList(
+                new SimpleGrantedAuthority("ROLE_" + roleName)
+        );
 
         return new UserPrincipal(
                 account.getId(),

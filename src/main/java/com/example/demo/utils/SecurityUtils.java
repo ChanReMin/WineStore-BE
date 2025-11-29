@@ -43,7 +43,7 @@ public class SecurityUtils {
                 "anonymousUser".equals(authentication.getPrincipal()));
     }
 
-    public Long getCurrentUserUuid() {
+    public static Long getCurrentUserUuid() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal userPrincipal) {
             return userPrincipal.getId();
