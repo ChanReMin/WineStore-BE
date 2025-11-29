@@ -1,4 +1,4 @@
-package com.example.demo.services.queries;
+package com.example.demo.services.queries.serviceQueryImpl;
 
 
 import com.example.demo.dtos.mappers.promotion.PromotionMapper;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class PromotionQueryService {
+public class PromotionQueryServiceImpl {
 
     private final PromotionQueryRepository promotionQueryRepository;
     private final PromotionMapper promotionMapper;
