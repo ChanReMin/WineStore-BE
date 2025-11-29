@@ -1,7 +1,7 @@
 package com.example.demo.services.commands;
 
 import com.example.demo.commons.enums.InventoryLogType;
-import com.example.demo.configs.SecurityUtils;
+import com.example.demo.utils.SecurityUtils;
 import com.example.demo.dtos.commands.inventory.CreateInventoryLogRequest;
 import com.example.demo.dtos.mappers.inventory_log.InventoryLogMapper;
 import com.example.demo.dtos.responses.inventory.InventoryLogResponse;

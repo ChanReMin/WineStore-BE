@@ -1,7 +1,7 @@
 package com.example.demo.services.queries;
 
 import com.example.demo.commons.enums.InventoryLogType;
-import com.example.demo.configs.SecurityUtils;
+import com.example.demo.utils.SecurityUtils;
 import com.example.demo.dtos.mappers.inventory_log.InventoryLogMapper;
 import com.example.demo.dtos.responses.inventory.InventoryLogListResponse;
 import com.example.demo.dtos.responses.inventory.InventoryLogResponse;
@@ -112,10 +112,7 @@ public class InventoryLogQueryService {
                 .build();
     }
 
-    /**
-     * API: GET /seller/inventory/logs/{id}
-     * Get single inventory log detail
-     */
+
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public InventoryLogResponse getInventoryLogById(Long id) {
         log.info("🔍 Fetching inventory log with id: {}", id);
@@ -134,9 +131,6 @@ public class InventoryLogQueryService {
         return mapToResponse(inventoryLog);
     }
 
-    /**
-     * Get inventory status for a product in a warehouse
-     */
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public InventoryStatusResponse getInventoryStatus(Long productId, Long warehouseId) {
         log.info("📦 Fetching inventory status for product: {} in warehouse: {}", productId, warehouseId);

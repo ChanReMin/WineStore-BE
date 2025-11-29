@@ -1,4 +1,4 @@
-package com.example.demo.configs;
+package com.example.demo.utils;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -11,10 +11,6 @@ import com.example.demo.configs.security.UserPrincipal; // New import
 @Component
 public class SecurityUtils {
 
-    /**
-     * Lấy email của user hiện tại từ Security Context
-     * Email được lưu trong Principal (UserDetails.getUsername())
-     */
     public String getCurrentUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -22,7 +18,6 @@ public class SecurityUtils {
             return null;
         }
 
-        // Principal có thể là UserDetails hoặc String (anonymous user)
         Object principal = authentication.getPrincipal();
 
         if (principal instanceof UserDetails) {
@@ -34,17 +29,12 @@ public class SecurityUtils {
         return null;
     }
 
-    /**
-     * Kiểm tra xem user hiện tại có phải là chủ sở hữu của resource không
-     */
     public boolean isOwner(String ownerEmail) {
         String currentEmail = getCurrentUserEmail();
         return currentEmail != null && currentEmail.equals(ownerEmail);
     }
 
-    /**
-     * Kiểm tra xem user hiện tại có authenticated không
-     */
+
     public boolean isAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null
@@ -53,10 +43,7 @@ public class SecurityUtils {
                 "anonymousUser".equals(authentication.getPrincipal()));
     }
 
-    /**
-     * Lấy UUID của user hiện tại từ Security Context
-     */
-    public static Long getCurrentUserUuid() {
+    public Long getCurrentUserUuid() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal userPrincipal) {
             return userPrincipal.getId();

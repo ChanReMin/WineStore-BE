@@ -1,8 +1,7 @@
-// ============= InventoryCommandService =============
 package com.example.demo.services.commands;
 
 import com.example.demo.commons.enums.InventoryLogType;
-import com.example.demo.configs.SecurityUtils;
+import com.example.demo.utils.SecurityUtils;
 import com.example.demo.dtos.commands.inventory.StockTakeRequest;
 import com.example.demo.dtos.commands.inventory.TransferInventoryRequest;
 import com.example.demo.dtos.commands.inventory.UpdateInventoryRequest;
@@ -37,7 +36,6 @@ public class InventoryCommandService {
     private final SecurityUtils securityUtils;
 
     /**
-     * API 3: PUT /seller/inventory/{inventory_id}
      * Update inventory quantity (IN/OUT/ADJUST)
      */
     @Transactional(transactionManager = "writeTransactionManager")
@@ -308,7 +306,7 @@ public class InventoryCommandService {
         if (type == InventoryLogType.OUT) {
             if (inventory.getQuantityOnHand() < quantity) {
                 throw new BadRequestException(
-                        String.format("Số lượng xuất kho vượt quá tồn kho hiện tại. Available: %d, Requested: %d",
+                        String.format("The quantity issued exceeds the current inventory. Available: %d, Requested: %d",
                                 inventory.getQuantityOnHand(), quantity)
                 );
             }

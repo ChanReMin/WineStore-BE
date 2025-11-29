@@ -1,7 +1,7 @@
 package com.example.demo.services.queries;
 
 import com.example.demo.commons.enums.InventoryStatus;
-import com.example.demo.configs.SecurityUtils;
+import com.example.demo.utils.SecurityUtils;
 import com.example.demo.dtos.responses.inventory.*;
 import com.example.demo.entities.Account;
 import com.example.demo.entities.Inventory;
@@ -35,10 +35,6 @@ public class InventoryQueryService {
     private final AccountQueryRepository accountQueryRepository;
     private final SecurityUtils securityUtils;
 
-    /**
-     * API 1: GET /api/v1/inventory
-     * Get all inventory with filters
-     */
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public InventoryListResponse getAllInventory(
             Integer page,
@@ -97,10 +93,6 @@ public class InventoryQueryService {
                 .build();
     }
 
-    /**
-     * API 2: GET /api/v1/inventory/{id}
-     * Get inventory detail
-     */
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public InventoryDetailResponse getInventoryById(Long inventoryId) {
         log.info("🔍 Fetching inventory with id: {}", inventoryId);
@@ -120,7 +112,6 @@ public class InventoryQueryService {
     }
 
     /**
-     * API: GET /api/v1/inventory/alerts
      * Get inventory alerts
      */
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
@@ -267,8 +258,8 @@ public class InventoryQueryService {
 
         // Message based on status
         String message = status == InventoryStatus.OUT_OF_STOCK
-                ? "Sản phẩm đã hết hàng"
-                : "Tồn kho thấp hơn mức an toàn";
+                ? "Product out of stock"
+                : "Inventory is below safety level";
 
         return InventoryAlertsResponse.AlertInfo.builder()
                 .id(inv.getId())

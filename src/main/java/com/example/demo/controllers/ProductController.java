@@ -1,11 +1,12 @@
 package com.example.demo.controllers;
 
+import com.example.demo.dtos.commands.product.AddPromotionsRequest;
 import com.example.demo.dtos.commands.product.UpdateProductStatusRequest;
 import com.example.demo.dtos.commands.product.WriteProductRequest;
 import com.example.demo.dtos.responses.SuccessResponse;
 import com.example.demo.dtos.responses.product.*;
-import com.example.demo.services.cloudinary.CloudinaryService;
 import com.example.demo.services.commands.ProductCommandService;
+import com.example.demo.services.commands.ProductPromotionCommandService;
 import com.example.demo.services.queries.ProductQueryService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -16,11 +17,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Map;
 
 @RestController
 @Slf4j
@@ -30,6 +28,7 @@ import java.util.Map;
 public class ProductController {
         private final ProductCommandService productCommandService;
         private final ProductQueryService productQueryService;
+        private final ProductPromotionCommandService productPromotionCommandService;
 
         @GetMapping()
         public ResponseEntity<SuccessResponse<ProductListResponse>> getAllProducts(
@@ -38,6 +37,7 @@ public class ProductController {
                 @RequestParam(required = false) String search,
                 @RequestParam(required = false) Integer status,
                 @RequestParam(required = false) Long categoryId,
+                @RequestParam(required = false) Long warehouseId,
                 @RequestParam(required = false) Long brandId,
                 @RequestParam(required = false) BigDecimal priceFrom,
                 @RequestParam(required = false) BigDecimal priceTo,
@@ -45,7 +45,7 @@ public class ProductController {
                 @RequestParam(required = false) BigDecimal concentrationTo) {
 
                 ProductListResponse response = productQueryService.getAllProducts(
-                        page, limit, search, status, categoryId, brandId,
+                        page, limit, search, status, categoryId, brandId,warehouseId,
                         priceFrom, priceTo, concentrationFrom, concentrationTo);
 
                 return ResponseEntity.ok(SuccessResponse.<ProductListResponse>builder()
@@ -90,9 +90,7 @@ public class ProductController {
                         .build());
         }
 
-        /**
-        * 5. PUT /api/v1/products/{product_id} - Cập nhật sản phẩm (Seller Only)
-        */
+
         @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
         @PreAuthorize("hasRole('SELLER')")
         public ResponseEntity<SuccessResponse<WriteProductResponse>> updateProduct(
@@ -131,6 +129,35 @@ public class ProductController {
                         .success(true)
                         .message("Update product status successfully")
                         .data(response)
+                        .build());
+        }
+
+        @PostMapping("/{id}/promotions")
+        @PreAuthorize("hasRole('SELLER')")
+        public ResponseEntity<SuccessResponse<AddPromotionsResponse>> addPromotionsToProduct(
+                @PathVariable Long id,
+                @Valid @RequestBody AddPromotionsRequest request) {
+
+                AddPromotionsResponse response = productPromotionCommandService.addPromotionsToProduct(id, request);
+
+                return ResponseEntity.ok(SuccessResponse.<AddPromotionsResponse>builder()
+                        .success(true)
+                        .message("Promotions added to product successfully")
+                        .data(response)
+                        .build());
+        }
+
+        @DeleteMapping("/{productId}/promotions/{promotionId}")
+        @PreAuthorize("hasRole('SELLER')")
+        public ResponseEntity<SuccessResponse<Void>> removePromotionFromProduct(
+                @PathVariable Long productId,
+                @PathVariable Long promotionId) {
+
+                productPromotionCommandService.removePromotionFromProduct(productId, promotionId);
+
+                return ResponseEntity.ok(SuccessResponse.<Void>builder()
+                        .success(true)
+                        .message("Promotion removed from product successfully")
                         .build());
         }
 }

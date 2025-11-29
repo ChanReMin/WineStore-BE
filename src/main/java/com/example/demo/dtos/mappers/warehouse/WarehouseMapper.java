@@ -31,7 +31,7 @@ public class WarehouseMapper {
             return null;
         }
 
-        // Get inventory summary (Seller không cần outOfStockProducts)
+        // Get inventory summary (Seller need outOfStockProducts)
         Integer totalProducts = inventoryQueryRepository.countProductsInWarehouse(warehouse.getId());
         Integer totalQuantity = inventoryQueryRepository.countTotalInventory(warehouse.getId());
         BigDecimal totalValue = inventoryQueryRepository.calculateInventoryValue(warehouse.getId());
