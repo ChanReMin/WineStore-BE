@@ -1,4 +1,4 @@
-package com.example.demo.dtos.responses.promotion;
+package com.example.demo.dtos.responses.product;
 
 import lombok.*;
 
@@ -9,11 +9,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CreatePromotionResponse {
+public class WriteProductResponse {
     private Long id;
-    private String code;
     private String name;
     private Integer status;
-    private LocalDateTime created_at;
-
+    private String statusText;
+    private LocalDateTime createdAt;
 }
