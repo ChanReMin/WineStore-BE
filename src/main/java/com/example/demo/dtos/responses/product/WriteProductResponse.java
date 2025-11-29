@@ -11,8 +11,9 @@ import java.time.LocalDateTime;
 @Builder
 public class WriteProductResponse {
     private Long id;
+    private String code;
     private String name;
     private Integer status;
-    private String statusText;
-    private LocalDateTime createdAt;
+    private LocalDateTime created_at;
+
 }
