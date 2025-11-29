@@ -1,14 +1,13 @@
 package com.example.demo.controllers;
 
 import com.example.demo.dtos.commands.UploadProductImageRequest;
-import com.example.demo.services.cloudinary.CloudinaryService;
+import com.example.demo.services.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/images")

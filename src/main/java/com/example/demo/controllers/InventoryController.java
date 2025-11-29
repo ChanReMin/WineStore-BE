@@ -76,10 +76,6 @@ public class InventoryController {
                 .build());
     }
 
-    /**
-     * Điều chuyển kho
-     *
-**/
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @PostMapping("/transfer")
     public ResponseEntity<SuccessResponse<TransferInventoryResponse>> transferInventory(
@@ -123,18 +119,7 @@ public class InventoryController {
                 .build());
     }
 
-    /**
-     * Lấy lịch sử xuất nhập kho
-     *
-     * Query Parameters:
-     * - page: Trang hiện tại (default: 1)
-     * - limit: Số bản ghi mỗi trang (default: 20, max: 100)
-     * - warehouse_id: Lọc theo kho
-     * - product_id: Lọc theo sản phẩm
-     * - type: Lọc theo loại (in, out, adjust, transfer)
-     * - from_date: Từ ngày (YYYY-MM-DD)
-     * - to_date: Đến ngày (YYYY-MM-DD)
-     */
+
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @GetMapping("/logs")
     public ResponseEntity<SuccessResponse<InventoryLogListResponse>> getAllInventoryLogs(
@@ -156,13 +141,6 @@ public class InventoryController {
     }
 
 
-    /**
-     * Lấy trạng thái tồn kho
-     *
-     * Query Parameters:
-     * - product_id: ID sản phẩm (required)
-     * - warehouse_id: ID kho (required)
-     */
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @GetMapping("/status")
     public ResponseEntity<SuccessResponse<InventoryStatusResponse>> getInventoryStatus(
@@ -178,9 +156,6 @@ public class InventoryController {
                 .build());
     }
 
-    /**
-     * Cập nhật số lượng tồn kho (nhập/xuất/điều chỉnh)
-     */
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @PostMapping
     public ResponseEntity<SuccessResponse<InventoryLogResponse>> createInventoryLog(
@@ -196,10 +171,6 @@ public class InventoryController {
                         .build());
     }
 
-    /**
-     * Xóa inventory log (soft delete)
-     * Chỉ ADMIN mới được xóa
-     */
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<SuccessResponse<Void>> deleteInventoryLog(

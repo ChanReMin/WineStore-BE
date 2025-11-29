@@ -34,6 +34,9 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
             "     LOWER(p.brand.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
             "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
             "AND (:brandId IS NULL OR p.brand.id = :brandId) " +
+            "AND (:warehouseId IS NULL OR EXISTS ( " +
+            "     SELECT inv FROM Inventory inv " +
+            "     WHERE inv.product = p AND inv.warehouse.id = :warehouseId )) " +
             "AND (:priceFrom IS NULL OR p.price >= :priceFrom) " +
             "AND (:priceTo IS NULL OR p.price <= :priceTo) " +
             "AND (:concentrationFrom IS NULL OR p.concentration >= :concentrationFrom) " +
@@ -45,6 +48,7 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
             @Param("search") String search,
             @Param("categoryId") Long categoryId,
             @Param("brandId") Long brandId,
+            @Param("warehouseId") Long warehouseId,
             @Param("priceFrom") BigDecimal priceFrom,
             @Param("priceTo") BigDecimal priceTo,
             @Param("concentrationFrom") BigDecimal concentrationFrom,
@@ -67,6 +71,9 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
             "     LOWER(p.brand.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
             "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
             "AND (:brandId IS NULL OR p.brand.id = :brandId) " +
+            "AND (:warehouseId IS NULL OR EXISTS ( " +
+            "     SELECT inv FROM Inventory inv " +
+            "     WHERE inv.product = p AND inv.warehouse.id = :warehouseId )) " +
             "AND (:priceFrom IS NULL OR p.price >= :priceFrom) " +
             "AND (:priceTo IS NULL OR p.price <= :priceTo) " +
             "AND (:concentrationFrom IS NULL OR p.concentration >= :concentrationFrom) " +
@@ -77,6 +84,7 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
             @Param("search") String search,
             @Param("categoryId") Long categoryId,
             @Param("brandId") Long brandId,
+            @Param("warehouseId") Long warehouseId,
             @Param("priceFrom") BigDecimal priceFrom,
             @Param("priceTo") BigDecimal priceTo,
             @Param("concentrationFrom") BigDecimal concentrationFrom,
@@ -99,6 +107,9 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
             "     LOWER(p.brand.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
             "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
             "AND (:brandId IS NULL OR p.brand.id = :brandId) " +
+            "AND (:warehouseId IS NULL OR EXISTS ( " +
+            "     SELECT inv FROM Inventory inv " +
+            "     WHERE inv.product = p AND inv.warehouse.id = :warehouseId )) " +
             "AND (:priceFrom IS NULL OR p.price >= :priceFrom) " +
             "AND (:priceTo IS NULL OR p.price <= :priceTo) " +
             "AND (:concentrationFrom IS NULL OR p.concentration >= :concentrationFrom) " +
@@ -108,6 +119,7 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
             @Param("search") String search,
             @Param("categoryId") Long categoryId,
             @Param("brandId") Long brandId,
+            @Param("warehouseId") Long warehouseId,
             @Param("priceFrom") BigDecimal priceFrom,
             @Param("priceTo") BigDecimal priceTo,
             @Param("concentrationFrom") BigDecimal concentrationFrom,

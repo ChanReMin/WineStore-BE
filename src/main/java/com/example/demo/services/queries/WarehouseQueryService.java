@@ -1,7 +1,7 @@
 package com.example.demo.services.queries;
 
 import com.example.demo.commons.enums.ProductStatus;
-import com.example.demo.configs.SecurityUtils;
+import com.example.demo.utils.SecurityUtils;
 import com.example.demo.dtos.mappers.warehouse.WarehouseMapper;
 import com.example.demo.dtos.responses.warehouse.*;
 import com.example.demo.entities.Account;

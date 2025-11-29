@@ -1,7 +1,7 @@
 package com.example.demo.services.queries;
 
 import com.example.demo.commons.enums.ProductStatus;
-import com.example.demo.configs.SecurityUtils;
+import com.example.demo.utils.SecurityUtils;
 import com.example.demo.dtos.mappers.product.ProductMapper;
 import com.example.demo.dtos.responses.product.*;
 import com.example.demo.entities.Account;
@@ -36,16 +36,6 @@ public class ProductQueryService {
     private final ProductMapper productMapper;
     private final SecurityUtils securityUtils;
 
-    /**
-     * Get all products with filters
-     * Query Parameters theo API doc:
-     * - page, limit: phân trang
-     * - search: tìm kiếm theo tên, brand, category
-     * - status: lọc theo trạng thái (1: Pending, 2: Active, 3: Banned)
-     * - categoryId, brandId: lọc theo danh mục, thương hiệu
-     * - priceFrom, priceTo: lọc theo khoảng giá
-     * - concentrationFrom, concentrationTo: lọc theo nồng độ
-     */
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public ProductListResponse getAllProducts(
             Integer page,
@@ -54,6 +44,7 @@ public class ProductQueryService {
             Integer status,
             Long categoryId,
             Long brandId,
+            Long warehouseId,
             BigDecimal priceFrom,
             BigDecimal priceTo,
             BigDecimal concentrationFrom,
@@ -85,17 +76,17 @@ public class ProductQueryService {
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
             productPage = productQueryRepository.findAllByCreatedByWithFilters(
-                    currentUser, productStatus, search, categoryId, brandId,
+                    currentUser, productStatus, search, categoryId, brandId,warehouseId,
                     priceFrom, priceTo, concentrationFrom, concentrationTo, pageable);
         } else if (isSellerView && hasRole("ADMIN")) {
             // Admin view: All products
             productPage = productQueryRepository.findAllWithFilters(
-                    productStatus, search, categoryId, brandId,
+                    productStatus, search, categoryId, brandId,warehouseId,
                     priceFrom, priceTo, concentrationFrom, concentrationTo, pageable);
         } else {
             // Customer/Guest view: Only ACTIVE products
             productPage = productQueryRepository.findAllActiveProductsWithFilters(
-                    search, categoryId, brandId, priceFrom, priceTo,
+                    search, categoryId, brandId,warehouseId, priceFrom, priceTo,
                     concentrationFrom, concentrationTo, pageable);
         }
 

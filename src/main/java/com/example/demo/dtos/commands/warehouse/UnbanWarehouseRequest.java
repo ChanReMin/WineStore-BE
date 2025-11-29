@@ -10,6 +10,6 @@ import lombok.*;
 @Builder
 public class UnbanWarehouseRequest {
 
-    @Size(max = 1000, message = "Ghi chú không quá 1000 ký tự")
+    @Size(max = 1000, message = "Note not exceed 1000 characters")
     private String note;
 }

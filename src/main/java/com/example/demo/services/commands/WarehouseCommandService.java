@@ -1,13 +1,12 @@
 package com.example.demo.services.commands;
 
 import com.example.demo.commons.enums.ProductStatus;
-import com.example.demo.configs.SecurityUtils;
+import com.example.demo.utils.SecurityUtils;
 import com.example.demo.dtos.commands.warehouse.CreateWarehouseRequest;
 import com.example.demo.dtos.commands.warehouse.UpdateWarehouseRequest;
 import com.example.demo.dtos.mappers.warehouse.WarehouseMapper;
 import com.example.demo.dtos.responses.warehouse.CreateWarehouseResponse;
 import com.example.demo.dtos.responses.warehouse.UpdateWarehouseResponse;
-import com.example.demo.dtos.responses.warehouse.WarehouseResponse;
 import com.example.demo.entities.Account;
 import com.example.demo.entities.Warehouse;
 import com.example.demo.exceptions.DuplicateResourceException;
@@ -33,7 +32,6 @@ public class WarehouseCommandService {
     private final WarehouseMapper warehouseMapper;
 
     /**
-     * API 1: POST /seller/warehouses
      * Create warehouse request (status = PENDING)
      */
     @Transactional(transactionManager = "writeTransactionManager")
@@ -46,7 +44,7 @@ public class WarehouseCommandService {
         if (warehouseCommandRepository.existsByNameAndManagerIdAndDeletedAtIsNull(
                 request.getName(), currentAccount.getId())) {
             throw new DuplicateResourceException(
-                    "Kho với tên '" + request.getName() + "' đã tồn tại",
+                    "Warehouse name '" + request.getName() + "' is already taken",
                     "name"
             );
         }
@@ -84,17 +82,17 @@ public class WarehouseCommandService {
         log.info("✏️ [SELLER] Updating warehouse: {}", warehouseId);
 
         Warehouse warehouse = warehouseCommandRepository.findById(warehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy kho hàng"));
+                .orElseThrow(() -> new ResourceNotFoundException("Not found warehouse"));
 
         validateOwnership(warehouse);
 
         // Chỉ cho phép cập nhật warehouse ACTIVE
         if (!warehouse.isActive()) {
             if (warehouse.isPending()) {
-                throw new ForbiddenException("Không thể cập nhật kho đang chờ duyệt");
+                throw new ForbiddenException("Not allowed to update pending warehouse");
             }
             if (warehouse.isBanned()) {
-                throw new ForbiddenException("Không thể cập nhật kho đã bị khóa");
+                throw new ForbiddenException("Not allowed to update banned warehouse");
             }
         }
 
@@ -103,7 +101,7 @@ public class WarehouseCommandService {
             if (warehouseCommandRepository.existsByNameAndManagerIdAndIdNotAndDeletedAtIsNull(
                     request.getName(), warehouse.getCreatedBy().getId(), warehouseId)) {
                 throw new DuplicateResourceException(
-                        "Kho với tên '" + request.getName() + "' đã tồn tại",
+                        "Warehouse name: '" + request.getName() + "' is already taken",
                         "name"
                 );
             }
@@ -135,7 +133,6 @@ public class WarehouseCommandService {
 
 
     /**
-     * API 5: DELETE /seller/warehouses/{id}
      * Delete warehouse request (only PENDING)
      */
     @Transactional(transactionManager = "writeTransactionManager")
@@ -143,12 +140,12 @@ public class WarehouseCommandService {
         log.info("🗑️ [SELLER] Deleting warehouse request: {}", warehouseId);
 
         Warehouse warehouse = warehouseCommandRepository.findById(warehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy kho hàng"));
+                .orElseThrow(() -> new ResourceNotFoundException("Not found warehouse"));
 
         validateOwnership(warehouse);
 
         if (!warehouse.isPending()) {
-            throw new ForbiddenException("Chỉ có thể xóa kho đang chờ duyệt");
+            throw new ForbiddenException("Only pending warehouses can be deleted");
         }
 
         warehouse.softDelete();
@@ -166,7 +163,7 @@ public class WarehouseCommandService {
     private void validateOwnership(Warehouse warehouse) {
         if (warehouse.getCreatedBy() == null ||
                 !securityUtils.isOwner(warehouse.getCreatedBy().getEmail())) {
-            throw new ForbiddenException("Bạn không có quyền truy cập kho này");
+            throw new ForbiddenException("User is not the owner of the warehouse");
         }
     }
 

@@ -10,7 +10,6 @@ import com.example.demo.entities.Account;
 import com.example.demo.entities.Brand;
 import com.example.demo.entities.Category;
 import com.example.demo.entities.Product;
-import com.example.demo.exceptions.BadRequestException;
 import com.example.demo.exceptions.DuplicateResourceException;
 import com.example.demo.exceptions.ForbiddenException;
 import com.example.demo.exceptions.ResourceNotFoundException;
@@ -18,9 +17,9 @@ import com.example.demo.repositories.commands.BrandCommandRepository;
 import com.example.demo.repositories.commands.AccountCommandRepository;
 import com.example.demo.repositories.commands.CategoryCommandRepository;
 import com.example.demo.repositories.commands.ProductCommandRepository;
-import com.example.demo.configs.SecurityUtils;
+import com.example.demo.utils.SecurityUtils;
 import com.example.demo.services.AiService;
-import com.example.demo.services.cloudinary.CloudinaryService;
+import com.example.demo.services.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,8 +44,8 @@ public class ProductCommandService {
         log.info("🆕 Creating product with name: {}", request.getName());
 
         // Get current user
-        String currentUserEmail = securityUtils.getCurrentUserEmail();
-        Account currentUser = accountCommandRepository.findByEmail(currentUserEmail)
+        Long Iduser = securityUtils.getCurrentUserUuid();
+        Account currentUser = accountCommandRepository.findById(Iduser)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Check duplicate product name
@@ -83,7 +82,7 @@ public class ProductCommandService {
         // Save product to Write DB FIRST (fast response)
         Product savedProduct = productCommandRepository.save(product);
         log.info("✅ Product created successfully with id: {} by user: {} and status: PENDING",
-                savedProduct.getId(), currentUserEmail);
+                savedProduct.getId(), Iduser);
 
         // Upload image asynchronously (non-blocking)
         cloudinaryService.uploadImageAsync(savedProduct.getId(), request.getImage())
@@ -102,8 +101,8 @@ public class ProductCommandService {
         log.info("✏️ Updating product with id: {}", id);
 
         // Get current user
-        String currentUserEmail = securityUtils.getCurrentUserEmail();
-
+        Long currentUser = securityUtils.getCurrentUserUuid();
+        log.info("Current user ID: {}", currentUser);
         // Find product with details to avoid N+1
         Product product = productCommandRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
@@ -148,8 +147,8 @@ public class ProductCommandService {
 
         // Save updated product to Write DB FIRST (fast response)
         Product updatedProduct = productCommandRepository.save(product);
-        log.info("✅ Product updated successfully with id: {} by user: {}, status reset to PENDING",
-                updatedProduct.getId(), currentUserEmail);
+        log.info("Product updated successfully with id: {} by user: {}, status reset to PENDING",
+                updatedProduct.getId(), currentUser);
 
         // Handle image update asynchronously if new image provided
         if (request.getImage() != null && !request.getImage().isEmpty()) {
@@ -224,9 +223,9 @@ public class ProductCommandService {
         Product product = productCommandRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
 
+        boolean isSeller = securityUtils.hasRole("SELLER");
         // Check if current user is the creator of this product
-        if (product.getCreatedBy() == null ||
-                !securityUtils.isOwner(product.getCreatedBy().getEmail())) {
+        if (isSeller) {
             throw new ForbiddenException("You don't have permission to update this product status");
         }
 

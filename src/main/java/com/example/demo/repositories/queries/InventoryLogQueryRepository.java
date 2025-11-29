@@ -33,8 +33,8 @@ public interface InventoryLogQueryRepository extends JpaRepository<InventoryLog,
             "WHERE (:warehouseId IS NULL OR il.warehouse.id = :warehouseId) " +
             "AND (:productId IS NULL OR il.product.id = :productId) " +
             "AND (:type IS NULL OR il.type = :type) " +
-            "AND (:fromDate IS NULL OR il.createdAt >= :fromDate) " +
-            "AND (:toDate IS NULL OR il.createdAt <= :toDate) " +
+            "AND il.createdAt >= COALESCE(:fromDate, il.createdAt) " +
+            "AND il.createdAt <= COALESCE(:toDate, il.createdAt) " +
             "AND il.deletedAt IS NULL")
     Page<InventoryLog> findAllWithFilters(
             @Param("warehouseId") Long warehouseId,
@@ -54,8 +54,8 @@ public interface InventoryLogQueryRepository extends JpaRepository<InventoryLog,
             "AND (:warehouseId IS NULL OR il.warehouse.id = :warehouseId) " +
             "AND (:productId IS NULL OR il.product.id = :productId) " +
             "AND (:type IS NULL OR il.type = :type) " +
-            "AND (:fromDate IS NULL OR il.createdAt >= :fromDate) " +
-            "AND (:toDate IS NULL OR il.createdAt <= :toDate) " +
+            "AND il.createdAt >= COALESCE(:fromDate, il.createdAt) " +
+            "AND il.createdAt <= COALESCE(:toDate, il.createdAt) " +
             "AND il.deletedAt IS NULL")
     Page<InventoryLog> findAllByCreatedByWithFilters(
             @Param("createdBy") Account createdBy,

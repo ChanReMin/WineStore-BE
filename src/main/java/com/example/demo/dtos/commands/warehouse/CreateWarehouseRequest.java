@@ -15,13 +15,13 @@ public class CreateWarehouseRequest {
     private String name;
 
     @NotBlank(message = "Warehouse location cannot be blank")
-    @Size(max = 512, message = "Địa chỉ không quá 512 ký tự")
+    @Size(max = 512, message = "Warehouse location cannot exceed 512 characters")
     private String location;
 
-    @NotBlank(message = "Thành phố không được để trống")
-    @Size(max = 50, message = "Thành phố không quá 50 ký tự")
+    @NotBlank(message = "City cannot be blank")
+    @Size(max = 50, message = "City cannot exceed 50 characters")
     private String city;
 
-    @Size(max = 1000, message = "Mô tả không quá 1000 ký tự")
+    @Size(max = 1000, message = "Description cannot exceed 1000 characters")
     private String description;
 }

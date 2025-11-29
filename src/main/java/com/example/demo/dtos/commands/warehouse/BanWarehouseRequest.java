@@ -11,7 +11,7 @@ import lombok.*;
 @Builder
 public class BanWarehouseRequest {
 
-    @NotBlank(message = "Lý do khóa kho là bắt buộc")
-    @Size(max = 1000, message = "Lý do không quá 1000 ký tự")
+    @NotBlank(message = "Reason is required")
+    @Size(max = 1000, message = "Reason cannot exceed 1000 characters")
     private String reason;
 }
