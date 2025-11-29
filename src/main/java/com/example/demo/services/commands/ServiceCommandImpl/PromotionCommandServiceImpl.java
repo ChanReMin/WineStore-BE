@@ -53,9 +53,9 @@ public class PromotionCommandServiceImpl {
     @Transactional
     public CreatePromotionResponse createPromotion(CreatePromotionRequest request) {
         // 1. Validate Code Uniqueness
-        if (promotionCommandRepository.existsByCode(request.getCode())) {
-            throw new DuplicateResourceException("code", "Promotion code already exists");
-        }
+//        if (promotionCommandRepository.existsByCode(request.getCode())) {
+//            throw new DuplicateResourceException("code", "Promotion code already exists");
+//        }
 
         // 2. Validate Discount Value
         if (request.getDiscount_type() == PERCENTAGE &&
