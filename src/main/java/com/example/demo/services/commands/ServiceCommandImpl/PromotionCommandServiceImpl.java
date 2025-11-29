@@ -1,4 +1,4 @@
-package com.example.demo.services.commands;
+package com.example.demo.services.commands.ServiceCommandImpl;
 
 import com.example.demo.commons.enums.DiscountType;
 
@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,7 +39,7 @@ import static com.example.demo.commons.enums.DiscountType.PERCENTAGE;
 
 @Service
 @RequiredArgsConstructor
-public class PromotionCommandService {
+public class PromotionCommandServiceImpl {
 
     private final PromotionCommandRepository promotionCommandRepository;
     private final PromotionQueryRepository promotionQueryRepository;
