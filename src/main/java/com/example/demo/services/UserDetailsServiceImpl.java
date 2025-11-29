@@ -1,4 +1,5 @@
 package com.example.demo.services;
+import com.example.demo.configs.security.UserPrincipal;
 import com.example.demo.repositories.commands.AccountCommandRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -26,4 +27,5 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 ))
                 .orElseThrow(() -> new UsernameNotFoundException("Account not found with email: " + email));
     }
+
 }

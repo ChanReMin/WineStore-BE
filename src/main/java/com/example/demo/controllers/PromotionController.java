@@ -12,8 +12,8 @@ import com.example.demo.dtos.responses.promotion.PromotionListResponse;
 import com.example.demo.dtos.responses.promotion.PromotionStatisticsResponse; // Import PromotionStatisticsResponse
 import com.example.demo.dtos.responses.promotion.TogglePromotionStatusResponse; // Import TogglePromotionStatusResponse
 import com.example.demo.dtos.responses.promotion.UpdatePromotionResponse;
-import com.example.demo.services.commands.PromotionCommandService;
-import com.example.demo.services.queries.PromotionQueryService;
+import com.example.demo.services.commands.ServiceCommandImpl.PromotionCommandServiceImpl;
+import com.example.demo.services.queries.serviceQueryImpl.PromotionQueryServiceIml;
 import jakarta.validation.Valid; // Import Valid annotation
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,12 +22,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/seller/promotions")
+@RequestMapping("/api/v1/promotions")
 @RequiredArgsConstructor
 public class PromotionController {
 
-    private final PromotionQueryService promotionQueryService;
-    private final PromotionCommandService promotionCommandService;
+    private final PromotionQueryServiceIml promotionQueryService;
+    private final PromotionCommandServiceImpl promotionCommandService;
 
     @GetMapping
     @PreAuthorize("hasRole('SELLER')")

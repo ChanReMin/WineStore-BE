@@ -1,4 +1,4 @@
-package com.example.demo.services.queries;
+package com.example.demo.services.queries.serviceQueryImpl;
 
 
 import com.example.demo.dtos.mappers.promotion.PromotionMapper;
@@ -26,6 +26,8 @@ import org.springframework.stereotype.Service;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,14 +36,15 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class PromotionQueryService {
+@Transactional(readOnly = true)
+public class PromotionQueryServiceIml {
 
     private final PromotionQueryRepository promotionQueryRepository;
     private final PromotionMapper promotionMapper;
     private final SecurityUtils securityUtils; // Inject SecurityUtils
     private final AccountQueryRepository accountQueryRepository; // Inject AccountQueryRepository
 
-
+    @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public PromotionListResponse getPromotions(int page, int limit, Integer status, String search, String sortBy, String sortOrder) {
         String sortField = sortBy;
         if (sortBy.equals("created_at")) {
@@ -110,7 +113,7 @@ public class PromotionQueryService {
                         .build())
                 .build();
     }
-
+    @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public PromotionDetailResponse getPromotionDetails(Long promotionId) {
         Promotion promotion = promotionQueryRepository.findById(promotionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Promotion", "id", promotionId));
@@ -120,7 +123,7 @@ public class PromotionQueryService {
 
         return promotionMapper.toPromotionDetailResponse(promotion);
     }
-
+    @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public PromotionStatisticsResponse getPromotionStatistics(Long promotionId) {
         // 1. Get Current Seller Account by Email
         String currentSellerEmail = securityUtils.getCurrentUserEmail();
@@ -132,6 +135,7 @@ public class PromotionQueryService {
         Long currentSellerAccountId = createdByAccount.getId();
 
         // 2. Retrieve existing Promotion
+
         Promotion promotion = promotionQueryRepository.findById(promotionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Promotion", "id", promotionId));
 
