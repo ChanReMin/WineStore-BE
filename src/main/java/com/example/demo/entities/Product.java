@@ -120,7 +120,7 @@ public class Product extends BaseEntity {
     @Column(name = "full_description", columnDefinition = "TEXT")
     private String fullDescription;
 
-    @Column(name = "description_vector", columnDefinition = "vector(1536)", insertable = false, updatable = false)
+    @Column(name = "description_vector", columnDefinition = "vector(384)", insertable = false, updatable = false)
     @Convert(converter = FloatArrayToVectorConverter.class)
     @Basic(fetch = FetchType.LAZY, optional = true)
     private float[] descriptionVector;
