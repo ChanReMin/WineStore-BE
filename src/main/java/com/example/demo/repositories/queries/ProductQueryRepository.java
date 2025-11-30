@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -156,4 +157,7 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.deletedAt IS NULL")
     Long countAllActive();
+    // Custom method to find products by category IDs
+    List<Product> findByCategoryIdIn(Collection<Long> categoryIds);
+
 }
