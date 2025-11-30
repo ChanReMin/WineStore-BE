@@ -36,6 +36,7 @@ public class InventoryQueryServiceImpl implements InventoryQueryService {
     private final AccountQueryRepository accountQueryRepository;
     private final SecurityUtils securityUtils;
 
+    @Override
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public InventoryListResponse getAllInventory(
             Integer page,
@@ -94,6 +95,7 @@ public class InventoryQueryServiceImpl implements InventoryQueryService {
                 .build();
     }
 
+    @Override
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public InventoryDetailResponse getInventoryById(Long inventoryId) {
         log.info("🔍 Fetching inventory with id: {}", inventoryId);
@@ -115,6 +117,7 @@ public class InventoryQueryServiceImpl implements InventoryQueryService {
     /**
      * Get inventory alerts
      */
+    @Override
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public InventoryAlertsResponse getInventoryAlerts(String type, Long warehouseId) {
         log.info("⚠️ Fetching inventory alerts - type: {}, warehouseId: {}", type, warehouseId);

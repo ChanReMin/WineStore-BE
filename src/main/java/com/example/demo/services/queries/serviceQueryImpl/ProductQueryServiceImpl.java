@@ -37,6 +37,7 @@ public class ProductQueryServiceImpl implements ProductQueryService {
     private final ProductMapper productMapper;
     private final SecurityUtils securityUtils;
 
+    @Override
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public ProductListResponse getAllProducts(
             Integer page,
@@ -119,6 +120,7 @@ public class ProductQueryServiceImpl implements ProductQueryService {
                 .build();
     }
 
+    @Override
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public Object getProductById(Long productId) {
         log.info("🔍 Fetching product with id: {}", productId);
@@ -148,6 +150,7 @@ public class ProductQueryServiceImpl implements ProductQueryService {
     /**
      * Get related products (similar products)
      */
+    @Override
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public Object getRelatedProducts(Long productId) {
         Product product = productQueryRepository.findById(productId)

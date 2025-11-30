@@ -3,6 +3,7 @@ package com.example.demo.entities;
 import com.example.demo.commons.enums.AccountRole;
 import com.example.demo.commons.enums.AccountStatus;
 import com.example.demo.commons.enums.AuthProvider;
+import com.example.demo.utils.AccountStatusConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -43,7 +44,7 @@ public class Account {
     @Column(columnDefinition = "SMALLINT")
     private AccountRole role;
 
-    @Enumerated(EnumType.ORDINAL)
+    @Convert(converter = AccountStatusConverter.class)
     @Column(columnDefinition = "SMALLINT")
     private AccountStatus status;
 
