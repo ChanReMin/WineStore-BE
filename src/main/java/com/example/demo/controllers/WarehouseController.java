@@ -6,6 +6,7 @@ import com.example.demo.dtos.responses.warehouse.*;
 import com.example.demo.services.commands.AdminWarehouseCommandService;
 import com.example.demo.services.commands.WarehouseCommandService;
 import com.example.demo.services.queries.WarehouseQueryService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/warehouses")
@@ -68,10 +70,6 @@ public class WarehouseController {
     }
 
 
-    /**
-     * API 3: GET /seller/warehouses/{id}
-     * Xem chi tiết warehouse
-     */
     @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
     @GetMapping("/{warehouseId}")
     public ResponseEntity<SuccessResponse<WarehouseDetailResponse>> getWarehouseById(
@@ -85,10 +83,6 @@ public class WarehouseController {
                 .build());
     }
 
-    /**
-     * API 4: PUT /seller/warehouses/{id}
-     * Cập nhật warehouse (chỉ ACTIVE)
-     */
     @PreAuthorize("hasRole('SELLER')")
     @PutMapping("/{warehouseId}")
     public ResponseEntity<SuccessResponse<UpdateWarehouseResponse>> updateWarehouse(
@@ -119,6 +113,7 @@ public class WarehouseController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{warehouseId}/approve")
+    @Operation(summary = "Admin only")
     public ResponseEntity<SuccessResponse<ApproveWarehouseResponse>> approveWarehouse(
             @PathVariable Long warehouseId,
             @Valid @RequestBody(required = false) ApproveWarehouseRequest request) {
@@ -134,6 +129,7 @@ public class WarehouseController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{warehouseId}/reject")
+    @Operation(summary = "Admin only")
     public ResponseEntity<SuccessResponse<RejectWarehouseResponse>> rejectWarehouse(
             @PathVariable Long warehouseId,
             @Valid @RequestBody RejectWarehouseRequest request) {
@@ -149,6 +145,7 @@ public class WarehouseController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{warehouseId}/ban")
+    @Operation(summary = "Admin only")
     public ResponseEntity<SuccessResponse<BanWarehouseResponse>> banWarehouse(
             @PathVariable Long warehouseId,
             @Valid @RequestBody BanWarehouseRequest request) {
@@ -165,6 +162,7 @@ public class WarehouseController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{warehouseId}/unban")
+    @Operation(summary = "Admin only")
     public ResponseEntity<SuccessResponse<UnBanWarehouseResponse>> unbanWarehouse(
             @PathVariable Long warehouseId,
             @Valid @RequestBody(required = false) UnbanWarehouseRequest request) {
@@ -192,6 +190,7 @@ public class WarehouseController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/statistics")
+    @Operation(summary = "Admin only")
     public ResponseEntity<SuccessResponse<WarehouseAdminStatisticsResponse>> getAdminStatistics(
             @RequestParam(required = false) Long managerId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
@@ -205,5 +204,31 @@ public class WarehouseController {
                 .success(true)
                 .data(data)
                 .build());
+    }
+
+    @GetMapping("/cities")
+    public ResponseEntity<SuccessResponse<List<String>>> getCities() {
+        List<String> cities = warehouseQueryService.getAllCities();
+
+        return ResponseEntity.ok(
+                SuccessResponse.<List<String>>builder()
+                        .success(true)
+                        .data(cities)
+                        .build()
+        );
+    }
+
+    @GetMapping("/by-city")
+    public ResponseEntity<SuccessResponse   <WarehouseByCityResponse>> getWarehousesByCity(
+            @RequestParam String city) {
+
+        WarehouseByCityResponse data = warehouseQueryService.getWarehousesByCity(city);
+
+        return ResponseEntity.ok(
+                SuccessResponse.<WarehouseByCityResponse>builder()
+                        .success(true)
+                        .data(data)
+                        .build()
+        );
     }
 }

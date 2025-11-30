@@ -14,7 +14,7 @@ import com.example.demo.exceptions.DuplicateResourceException;
 import com.example.demo.repositories.commands.AccountCommandRepository;
 import com.example.demo.repositories.commands.UserCommandRepository;
 import com.example.demo.repositories.queries.AccountQueryRepository;
-import com.example.demo.repositories.queries.UserServiceRepository;
+import com.example.demo.repositories.queries.UserQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,7 +30,7 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserServiceRepository userServiceRepository;
+    private final UserQueryRepository userServiceRepository;
     private final UserCommandRepository userCommandRepository;
     private final AccountCommandRepository accountCommandRepository;
     private final AccountQueryRepository accountQueryRepository;

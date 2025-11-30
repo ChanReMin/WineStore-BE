@@ -96,4 +96,21 @@ public interface WarehouseQueryRepository extends JpaRepository<Warehouse, Long>
     @Query("SELECT COUNT(w) FROM Warehouse w WHERE w.createdBy.id = :managerId " +
             "AND w.status = :status AND w.deletedAt IS NULL")
     long countByManagerAndStatus(@Param("managerId") Long managerId, @Param("status") ProductStatus status);
+
+    @Query("SELECT DISTINCT w.city FROM Warehouse w " +
+            "WHERE w.city IS NOT NULL " +
+            "AND w.city <> '' " +
+            "AND w.deletedAt IS NULL " +
+            "ORDER BY w.city ASC")
+    List<String> findDistinctCities();
+
+    /**
+     * Tìm warehouses theo city
+     * Chỉ lấy các warehouse chưa bị xóa
+     */
+    @Query("SELECT w FROM Warehouse w " +
+            "WHERE w.city = :city " +
+            "AND w.deletedAt IS NULL " +
+            "ORDER BY w.createdAt DESC")
+    List<Warehouse> findByCity(@Param("city") String city);
 }

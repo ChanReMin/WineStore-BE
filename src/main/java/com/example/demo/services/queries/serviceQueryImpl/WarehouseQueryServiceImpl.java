@@ -287,6 +287,40 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
                 .build();
     }
 
+    @Override
+    @Transactional(transactionManager = "readTransactionManager", readOnly = true)
+    public List<String> getAllCities() {
+        log.info("🏙️ Fetching all distinct cities");
+
+        List<String> cities = warehouseQueryRepository.findDistinctCities();
+
+        log.info("✅ Found {} cities", cities.size());
+        return cities;
+    }
+
+    @Override
+    @Transactional(transactionManager = "readTransactionManager", readOnly = true)
+    public WarehouseByCityResponse getWarehousesByCity(String city) {
+        log.info("📍 Fetching warehouses for city: {}", city);
+
+        if (city == null || city.trim().isEmpty()) {
+            throw new IllegalArgumentException("City parameter is required");
+        }
+
+        List<Warehouse> warehouses = warehouseQueryRepository.findByCity(city.trim());
+
+        List<WarehouseByCityResponse.WarehouseItem> warehouseItems = warehouses.stream()
+                .map(this::toWarehouseItem)
+                .collect(Collectors.toList());
+
+        log.info("✅ Found {} warehouses in city: {}", warehouseItems.size(), city);
+
+        return WarehouseByCityResponse.builder()
+                .data(warehouseItems)
+                .total((long) warehouseItems.size())
+                .build();
+    }
+
     // ============= Helper Methods =============
 
     private List<WarehouseAdminStatisticsResponse.StatusBreakdown> buildAdminStatusBreakdown(
@@ -379,5 +413,18 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
                 !securityUtils.isOwner(warehouse.getCreatedBy().getEmail())) {
             throw new ForbiddenException("You not have permission to manage this warehouse");
         }
+    }
+
+    private WarehouseByCityResponse.WarehouseItem toWarehouseItem(Warehouse warehouse) {
+        return WarehouseByCityResponse.WarehouseItem.builder()
+                .id(warehouse.getId())
+                .name(warehouse.getName())
+                .location(warehouse.getLocation())
+                .description(warehouse.getDescription())
+                .status(warehouse.getStatus().getCode())
+                .city(warehouse.getCity())
+                .managerId(warehouse.getCreatedBy() != null ? warehouse.getCreatedBy().getId() : null)
+                .createdAt(warehouse.getCreatedAt())
+                .build();
     }
 }
