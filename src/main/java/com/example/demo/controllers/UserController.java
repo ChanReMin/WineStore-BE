@@ -227,36 +227,6 @@ public class UserController {
         );
     }
 
-    /**
-     * 11. Send notification to user
-     */
-    @PostMapping("/{userId}/notifications")
-    @Operation(summary = "Admin only")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<SuccessResponse<SendNotificationResponse>> sendNotification(
-            @PathVariable Long userId,
-            @Valid @RequestBody SendNotificationRequest request
-    ) {
-        String notificationId = userCommandService.sendNotificationToUser(userId, request);
-
-        SendNotificationResponse response = SendNotificationResponse.builder()
-                .notificationId(notificationId)
-                .sentAt(LocalDateTime.now())
-                .build();
-
-        return ResponseEntity.ok(
-                SuccessResponse.<SendNotificationResponse>builder()
-                        .success(true)
-                        .message("Notification sent successfully")
-                        .data(response)
-                        .build()
-        );
-    }
-
-
-    /**
-     * 12. Bulk actions
-     */
     @PostMapping("/bulk-actions")
     @Operation(summary = "Admin only")
     @PreAuthorize("hasRole('ADMIN')")

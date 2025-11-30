@@ -132,35 +132,6 @@ public class UserCommandServiceImpl implements UserCommandService {
                 .build();
     }
 
-    @Override
-    @Transactional(transactionManager = "writeTransactionManager")
-    public String sendNotificationToUser(Long userId, SendNotificationRequest request) {
-        Account account = accountQueryRepository.findByIdWithUser(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        User user = account.getUser();
-
-        // Create notification
-        Notification notification = Notification.builder()
-                .user(user)
-                .title(request.getTitle())
-                .message(request.getMessage())
-                .status(request.getType())
-                .isRead(false)
-                .build();
-
-        notification = notificationCommandRepository.save(notification);
-
-        // Send email if requested
-        if (request.getSendEmail() != null && request.getSendEmail()) {
-            // emailService.sendNotificationEmail(account.getEmail(), request.getTitle(), request.getMessage());
-            log.info("Email notification sent to: {}", account.getEmail());
-        }
-
-        log.info("Created notification {} for user {}", notification.getId(), userId);
-
-        return notification.getId().toString();
-    }
 
     @Override
     @Transactional(transactionManager = "writeTransactionManager")
