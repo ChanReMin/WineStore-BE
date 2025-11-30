@@ -97,11 +97,18 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
-    // 400 - Bad Request
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex) {
-        log.warn("Bad request: {}", ex.getMessage());
-        return buildError(HttpStatus.BAD_REQUEST, ex.getMessage());
+    // 409 - Order Conflict
+    @ExceptionHandler(OrderConflictException.class)
+    public ResponseEntity<ErrorResponse> handleOrderConflict(OrderConflictException ex) {
+        log.warn("Order conflict: {}", ex.getMessage());
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .success(false)
+                .message(ex.getMessage())
+                .data(ex.getUnavailableItems())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
     // 404 - File Upload

@@ -2,6 +2,7 @@ package com.example.demo.repositories.queries;
 
 import com.example.demo.entities.Account;
 import com.example.demo.entities.Inventory;
+import com.example.demo.entities.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -192,4 +193,5 @@ public interface InventoryQueryRepository extends JpaRepository<Inventory, Long>
             "AND (i.quantityOnHand IS NULL OR i.quantityOnHand = 0) " +
             "AND i.deletedAt IS NULL")
     Integer countOutOfStockProducts(@Param("warehouseId") Long warehouseId);
+
 }

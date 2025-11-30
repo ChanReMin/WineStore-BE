@@ -17,6 +17,7 @@ public class ErrorResponse {
     private boolean success;
     private String message;
     private List<ErrorDetail> errors;
+    private Object data; // Added generic data field
 
     @Getter
     @Setter
