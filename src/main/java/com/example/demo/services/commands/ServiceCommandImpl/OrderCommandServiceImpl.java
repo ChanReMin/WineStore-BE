@@ -243,7 +243,18 @@ public class OrderCommandServiceImpl implements OrderCommandService {
         log.info("User cart cleared. Cart ID: {}", cart.getId());
 
         // 12. Payment gateway integration (placeholder: generate payment URL)
-        String paymentUrl = "https://payment.vnpay.vn/checkout?token=" + generatePaymentToken(order.getId(), finalAmount);
+        String paymentUrl = null;
+
+        if (paymentMethod.getCode().equals("VNPAY")) {
+            String token = generatePaymentToken(order.getId(), finalAmount);
+            paymentUrl = "https://payment.vnpay.vn/checkout?token=" +generatePaymentToken(order.getId(), finalAmount);
+            order.setPaymentStatus(PaymentStatus.UNPAID); // Chờ VNPay confirm
+            log.info("VNPay selected. Redirect URL generated: {}", paymentUrl);
+
+        } else if (paymentMethod.getCode().equals("COD")) {
+            order.setPaymentStatus(PaymentStatus.UNPAID);
+            log.info("COD selected. No payment URL.");
+        }
         log.debug("Generated payment URL: {}", paymentUrl);
 
         // 13. Return OrderCreateResponse
