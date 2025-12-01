@@ -240,7 +240,7 @@ public class ProductCommandServiceImpl implements ProductCommandService {
         product.setStatus(newStatus);
 
         // Save updated product
-        Product updatedProduct = productCommandRepository. save(product);
+        Product updatedProduct = productCommandRepository.save(product);
 
         log.info("✅ Product status updated successfully - productId: {}, status: {} by user: {}",
                 productId, newStatus.getDescription(), currentUserEmail);
