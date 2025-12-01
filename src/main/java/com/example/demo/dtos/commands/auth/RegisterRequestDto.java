@@ -28,18 +28,14 @@ public class RegisterRequestDto {
     @Size(min = 8, message = "Password must be at least 8 characters long")
     private String password;
 
-    @JsonProperty("first_name")
     @NotBlank(message = "First name is required")
     private String firstName;
 
-    @JsonProperty("last_name")
     @NotBlank(message = "Last name is required")
     private String lastName;
 
-    @JsonProperty("phone_number")
     private String phoneNumber;
 
-    @JsonProperty("date_of_birth")
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
 

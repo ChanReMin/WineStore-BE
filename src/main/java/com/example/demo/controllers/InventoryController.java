@@ -29,7 +29,7 @@ public class InventoryController {
     private final InventoryQueryService inventoryQueryService;
     private final InventoryCommandService inventoryCommandService;
 
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     @GetMapping
     public ResponseEntity<SuccessResponse<InventoryListResponse>> getAllInventory(
             @RequestParam(defaultValue = "1") Integer page,
@@ -48,7 +48,7 @@ public class InventoryController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
     @GetMapping("/{inventoryId}")
     public ResponseEntity<SuccessResponse<InventoryDetailResponse>> getInventoryById(
             @PathVariable Long inventoryId) {
@@ -61,7 +61,7 @@ public class InventoryController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SELLER')")
     @PutMapping("/{inventoryId}")
     public ResponseEntity<SuccessResponse<UpdateInventoryResponse>> updateInventory(
             @PathVariable Long inventoryId,
@@ -76,7 +76,7 @@ public class InventoryController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SELLER')")
     @PostMapping("/transfer")
     public ResponseEntity<SuccessResponse<TransferInventoryResponse>> transferInventory(
             @Valid @RequestBody TransferInventoryRequest request) {
@@ -90,7 +90,7 @@ public class InventoryController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SELLER')")
     @PostMapping("/stock-take")
     public ResponseEntity<SuccessResponse<StockTakeResponse>> stockTake(
             @Valid @RequestBody StockTakeRequest request) {
@@ -105,7 +105,7 @@ public class InventoryController {
     }
 
 
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SELLER')")
     @GetMapping("/alerts")
     public ResponseEntity<SuccessResponse<InventoryAlertsResponse>> getInventoryAlerts(
             @RequestParam(required = false) String type,
@@ -120,7 +120,7 @@ public class InventoryController {
     }
 
 
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SELLER')")
     @GetMapping("/logs")
     public ResponseEntity<SuccessResponse<InventoryLogListResponse>> getAllInventoryLogs(
             @RequestParam(defaultValue = "1") Integer page,
@@ -141,7 +141,7 @@ public class InventoryController {
     }
 
 
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SELLER')")
     @GetMapping("/status")
     public ResponseEntity<SuccessResponse<InventoryStatusResponse>> getInventoryStatus(
             @RequestParam(name = "product_id") Long productId,
@@ -156,7 +156,7 @@ public class InventoryController {
                 .build());
     }
 
-    @PreAuthorize("hasAnyRole('SELLER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SELLER')")
     @PostMapping
     public ResponseEntity<SuccessResponse<InventoryLogResponse>> createInventoryLog(
             @Valid @RequestBody CreateInventoryLogRequest request) {

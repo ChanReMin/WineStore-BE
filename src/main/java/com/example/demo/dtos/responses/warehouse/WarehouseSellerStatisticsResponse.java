@@ -12,7 +12,8 @@ public class WarehouseSellerStatisticsResponse {
 
     private Long totalWarehouses;
 
-    private Long activeWarehouses;
+    private Long approveWarehouses;
+    private Long rejectWarehouses;
 
     private Long pendingWarehouses;
 
