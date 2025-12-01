@@ -266,4 +266,21 @@ public class UserController {
                         .build()
         );
     }
+
+    @PostMapping("/add-sellers")
+    @Operation(summary = "Create seller account - Admin only")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SuccessResponse<CreateSellerResponse>> createSeller(
+            @Valid @RequestBody CreateSellerRequest request
+    ) {
+        CreateSellerResponse data = userCommandService.createSeller(request);
+
+        return ResponseEntity.ok(
+                SuccessResponse.<CreateSellerResponse>builder()
+                        .success(true)
+                        .message("Seller account created successfully")
+                        .data(data)
+                        .build()
+        );
+    }
 }
