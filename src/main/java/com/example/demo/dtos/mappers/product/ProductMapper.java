@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -149,6 +150,7 @@ public class ProductMapper {
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .approvedAt(product.getApprovedAt())
+                .promotions(mapPromotions(product))
                 .build();
     }
 
@@ -194,6 +196,7 @@ public class ProductMapper {
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .approvedAt(product.getApprovedAt())
+                .promotions(mapPromotions(product))
                 .build();
     }
 
@@ -307,5 +310,24 @@ public class ProductMapper {
                         product.getCreatedBy().getUser().getLastName())
                 .rating(java.math.BigDecimal.valueOf(4.9)) // TODO: Calculate from reviews
                 .build();
+    }
+
+    private List<PromotionInfo> mapPromotions(Product product) {
+        if (product.getPromotionProducts() == null || product.getPromotionProducts().isEmpty()) {
+            return null;
+        }
+
+        return product.getPromotionProducts().stream()
+                .filter(pp -> pp.getPromotion() != null && pp.getPromotion().getDeletedAt() == null)
+                .map(pp -> {
+                    var promotion = pp.getPromotion();
+                    return PromotionInfo.builder()
+                            .id(promotion.getId())
+                            .code(promotion.getCode())
+                            .name(promotion.getName())
+                            .discountType(promotion.getDiscountType().name())
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }

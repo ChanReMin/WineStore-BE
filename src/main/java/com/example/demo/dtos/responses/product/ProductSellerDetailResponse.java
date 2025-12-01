@@ -46,4 +46,6 @@ public class ProductSellerDetailResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime approvedAt;
+
+    private List<PromotionInfo> promotions;
 }

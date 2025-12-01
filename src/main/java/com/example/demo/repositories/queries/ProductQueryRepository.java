@@ -93,6 +93,26 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
             Pageable pageable
     );
 
+    /**
+     * Batch fetch promotions for multiple products
+     */
+    @Query("SELECT DISTINCT p FROM Product p " +
+            "LEFT JOIN FETCH p.promotionProducts pp " +
+            "LEFT JOIN FETCH pp.promotion pr " +
+            "WHERE p.id IN :productIds " +
+            "AND pr.deletedAt IS NULL")
+    List<Product> fetchPromotionsForProducts(@Param("productIds") List<Long> productIds);
+
+    /**
+     * Fetch promotions for single product
+     */
+    @Query("SELECT DISTINCT p FROM Product p " +
+            "LEFT JOIN FETCH p.promotionProducts pp " +
+            "LEFT JOIN FETCH pp.promotion pr " +
+            "WHERE p.id = :productId " +
+            "AND pr.deletedAt IS NULL")
+    Product fetchPromotionsForProduct(@Param("productId") Long productId);
+
     // ============= Customer/Guest Queries =============
 
     /**
