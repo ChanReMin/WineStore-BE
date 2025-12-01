@@ -11,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude()
 public class ProductCustomerDetailResponse {
     private Long id;
     private String name;
@@ -32,6 +32,13 @@ public class ProductCustomerDetailResponse {
     private TasteProfile tasteProfile;
     private List<String> foodPairing;
     private String servingTemperature;
+    private String temperature;
+    private String wineType;
+    private String humidity;
+    private String light;
+    private String position;
+    private String vibration;
+    private String afterOpening;
     private Boolean inStock;
     private BigDecimal ratingAverage;
     private Integer ratingCount;
