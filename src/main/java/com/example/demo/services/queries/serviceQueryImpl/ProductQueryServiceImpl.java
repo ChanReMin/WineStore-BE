@@ -92,6 +92,15 @@ public class ProductQueryServiceImpl implements ProductQueryService {
                     concentrationFrom, concentrationTo, pageable);
         }
 
+        if (isSellerView && !productPage.isEmpty()) {
+            List<Long> productIds = productPage.getContent().stream()
+                    .map(Product::getId)
+                    .collect(Collectors.toList());
+
+            // Batch fetch promotions for all products
+            productQueryRepository.fetchPromotionsForProducts(productIds);
+        }
+
         // Map to appropriate response based on view
         List<Object> products = productPage.getContent().stream()
                 .map(product -> isSellerView
@@ -139,6 +148,9 @@ public class ProductQueryServiceImpl implements ProductQueryService {
         // Seller view: Only owner can see
         if (isSellerView && hasRole("SELLER") && !hasRole("ADMIN") && !isOwner) {
             throw new ResourceNotFoundException("Không tìm thấy sản phẩm");
+        }
+        if (isSellerView) {
+            productQueryRepository.fetchPromotionsForProduct(productId);
         }
 
         // Return appropriate response
