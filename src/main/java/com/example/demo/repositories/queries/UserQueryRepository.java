@@ -1,6 +1,7 @@
 package com.example.demo.repositories.queries;
 
 import com.example.demo.entities.User;
+import com.example.demo.entities.UserAddress;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -56,4 +57,15 @@ public interface UserQueryRepository extends JpaRepository<User, Long> {
             "WHERE p.createdBy.id IN :accountIds " +
             "GROUP BY p.createdBy.id")
     List<Object[]> countProductsByAccountIds(@Param("accountIds") List<Long> accountIds);
+
+    @Query("SELECT ua FROM UserAddress ua " +
+            "WHERE ua.user.id = :userId " +
+            "AND ua.deletedAt IS NULL " +
+            "ORDER BY ua.isDefault DESC, ua.createdAt DESC")
+    List<UserAddress> findAddressesByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT ua FROM UserAddress ua " +
+            "WHERE ua.id = :addressId " +
+            "AND ua.deletedAt IS NULL")
+    Optional<UserAddress> findAddressById(@Param("addressId") Long addressId);
 }

@@ -33,6 +33,7 @@ public interface AccountQueryRepository extends JpaRepository<Account, Long>, Jp
             "WHERE a.id = :accountId")
     Optional<Account> findByIdWithUser(@Param("accountId") Long accountId);
 
+
     /**
      * Find account by email with user
      */
@@ -105,4 +106,5 @@ public interface AccountQueryRepository extends JpaRepository<Account, Long>, Jp
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
 }
