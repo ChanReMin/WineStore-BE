@@ -24,7 +24,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 
 
@@ -71,14 +71,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers( "/test" ,  "/api/v1/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/healthz", "/oauth2/**", "/login/oauth2/code/*",
                                 "/api/v1/products",
-                                "/api/v1/products/**",
-                                "/api/v1/categories",
-                                "/api/v1/brands").permitAll()
+                                "/api/v1/products/**" ).permitAll()
                         .anyRequest().authenticated()
                 )
-                    .sessionManagement(session -> session
-                            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                    )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .authenticationProvider(authenticationProvider())
                 .oauth2Login(oauth2Login -> oauth2Login
                         .authorizationEndpoint(authorizationEndpoint -> authorizationEndpoint
@@ -90,6 +88,12 @@ public class SecurityConfig {
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                         .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
+                        )
+                )
+
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class) ;
 
 
