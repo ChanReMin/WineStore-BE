@@ -2,14 +2,17 @@ package com.example.demo.services.commands.ServiceCommandImpl;
 
 import com.example.demo.commons.enums.AccountRole;
 import com.example.demo.commons.enums.AccountStatus;
+import com.example.demo.commons.enums.AuthProvider;
 import com.example.demo.dtos.commands.user.*;
 import com.example.demo.dtos.responses.user.ChangeUserStatusResponse;
+import com.example.demo.dtos.responses.user.CreateSellerResponse;
 import com.example.demo.dtos.responses.user.RestoreUserResponse;
 import com.example.demo.dtos.responses.user.UpdateAvatarResponse;
 import com.example.demo.entities.Account;
 import com.example.demo.entities.Notification;
 import com.example.demo.entities.User;
 import com.example.demo.exceptions.BadRequestException;
+import com.example.demo.exceptions.DuplicateResourceException;
 import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.repositories.commands.AccountCommandRepository;
 import com.example.demo.repositories.commands.NotificationCommandRepository;
@@ -19,11 +22,13 @@ import com.example.demo.services.CloudinaryService;
 import com.example.demo.services.commands.UserCommandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +43,7 @@ public class UserCommandServiceImpl implements UserCommandService {
     private final NotificationCommandRepository notificationCommandRepository;
     private final CloudinaryService cloudinaryService;
     private final UserCommandRepository userCommandRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional(transactionManager = "writeTransactionManager")
@@ -75,6 +81,57 @@ public class UserCommandServiceImpl implements UserCommandService {
     }
 
     @Override
+    @Transactional(transactionManager = "writeTransactionManager")
+    public CreateSellerResponse createSeller(CreateSellerRequest request) {
+        log.info("🆕 Admin creating seller account with email: {}", request.getEmail());
+
+        // Check if email already exists
+        if (accountCommandRepository.existsByEmail(request.getEmail())) {
+            throw new DuplicateResourceException("Email already exists", "email");
+        }
+
+        // Create Account entity
+        Account account = Account.builder()
+                .email(request.getEmail())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .provider(AuthProvider.local)
+                .role(AccountRole.SELLER)
+                .status(AccountStatus.ACTIVE)
+                .build();
+
+        Account savedAccount = accountCommandRepository.save(account);
+        log.info("✅ Account created with id: {} and role: SELLER", savedAccount.getId());
+
+        // Create User entity
+        User user = User.builder()
+                .account(savedAccount)
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .phoneNumber(request.getPhoneNumber())
+                .dateOfBirth(request.getDateOfBirth())
+                .gender(request.getGender())
+                .build();
+
+        User savedUser = userCommandRepository.save(user);
+        log.info("✅ Seller user created with id: {}", savedUser.getId());
+
+        // Build response
+        return CreateSellerResponse.builder()
+                .id(savedUser.getId())
+                .email(savedAccount.getEmail())
+                .firstName(savedUser.getFirstName())
+                .lastName(savedUser.getLastName())
+                .phoneNumber(savedUser.getPhoneNumber())
+                .dateOfBirth(savedUser.getDateOfBirth())
+                .gender(savedUser.getGender())
+                .role(savedAccount.getRole().getDisplayName())
+                .status(savedAccount.getStatus().getDisplayName())
+                .createdAt(savedUser.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                .build();
+    }
+
+    @Override
+    @Transactional(transactionManager = "writeTransactionManager")
     public ChangeUserStatusResponse changeUserStatus(Long userId, ChangeUserStatusRequest request) {
         Account account = accountQueryRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));

@@ -13,6 +13,7 @@ import java.util.Optional;
 @Repository
 public interface AccountCommandRepository extends JpaRepository<Account, Long> {
     Optional<Account> findByEmail(String email);
+    boolean existsByEmail(String email);
 
     /**
      * Batch update status for multiple accounts
