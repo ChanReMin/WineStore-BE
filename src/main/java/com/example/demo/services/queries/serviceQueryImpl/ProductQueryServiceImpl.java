@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional; // Added import for Optional
 import java.util.stream.Collectors;
 
 @Service
@@ -180,6 +181,16 @@ public class ProductQueryServiceImpl implements ProductQueryService {
                 .collect(Collectors.toList());
 
         return java.util.Map.of("products", products);
+    }
+
+    /**
+     * Get product entity by ID with inventories eagerly loaded
+     */
+    @Override
+    @Transactional(transactionManager = "readTransactionManager", readOnly = true)
+    public Optional<Product> getProductEntityByIdWithInventories(Long productId) {
+        log.info("🔍 Fetching product entity with id: {} and inventories", productId);
+        return productQueryRepository.findByIdWithInventories(productId);
     }
 
     // ============= Helper Methods =============
