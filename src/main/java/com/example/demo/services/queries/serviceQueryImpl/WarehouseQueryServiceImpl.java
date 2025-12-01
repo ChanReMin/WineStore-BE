@@ -113,9 +113,10 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
         List<Warehouse> warehouses = warehouseQueryRepository.findByManager(currentAccount);
 
         long totalWarehouses = warehouses.size();
-        long activeWarehouses = warehouses.stream().filter(Warehouse::isActive).count();
+        long activeWarehouses = warehouses.stream().filter(Warehouse::isApproved).count();
         long pendingWarehouses = warehouses.stream().filter(Warehouse::isPending).count();
         long bannedWarehouses = warehouses.stream().filter(Warehouse::isBanned).count();
+        long rejectWarehouses = warehouses.stream().filter(Warehouse::isReject).count();
 
         // Calculate inventory totals
         Integer totalProducts = 0;
@@ -134,7 +135,7 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
                 WarehouseSellerStatisticsResponse.StatusCount.builder()
                         .status(1)
                         .count(activeWarehouses)
-                        .label("Active")
+                        .label("Approve")
                         .build(),
                 WarehouseSellerStatisticsResponse.StatusCount.builder()
                         .status(0)
@@ -144,13 +145,19 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
                 WarehouseSellerStatisticsResponse.StatusCount.builder()
                         .status(2)
                         .count(bannedWarehouses)
-                        .label("Lock")
+                        .label("Ban")
+                        .build(),
+                WarehouseSellerStatisticsResponse.StatusCount.builder()
+                        .status(2)
+                        .count(rejectWarehouses)
+                        .label("Reject")
                         .build()
         );
 
         return WarehouseSellerStatisticsResponse.builder()
                 .totalWarehouses(totalWarehouses)
-                .activeWarehouses(activeWarehouses)
+                .approveWarehouses(activeWarehouses)
+                .rejectWarehouses(rejectWarehouses)
                 .pendingWarehouses(pendingWarehouses)
                 .bannedWarehouses(bannedWarehouses)
                 .totalInventoryValue(totalInventoryValue)
@@ -193,9 +200,10 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
 
         // Calculate overview
         long totalWarehouses = warehouses.size();
-        long activeWarehouses = warehouses.stream().filter(Warehouse::isActive).count();
+        long activeWarehouses = warehouses.stream().filter(Warehouse::isApproved).count();
         long pendingWarehouses = warehouses.stream().filter(Warehouse::isPending).count();
         long bannedWarehouses = warehouses.stream().filter(Warehouse::isBanned).count();
+        long rejectWarehouses = warehouses.stream().filter(Warehouse::isReject).count();
 
         // Calculate inventory totals
         Integer totalProducts = 0;
@@ -213,7 +221,8 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
         WarehouseAdminStatisticsResponse.Overview overview =
                 WarehouseAdminStatisticsResponse.Overview.builder()
                         .totalWarehouses(totalWarehouses)
-                        .activeWarehouses(activeWarehouses)
+                        .approveWarehouses(activeWarehouses)
+                        .rejectWarehouses(rejectWarehouses)
                         .pendingWarehouses(pendingWarehouses)
                         .bannedWarehouses(bannedWarehouses)
                         .build();
@@ -229,11 +238,11 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
         // Build status breakdown
         List<WarehouseAdminStatisticsResponse.StatusBreakdown> byStatus =
                 buildAdminStatusBreakdown(totalWarehouses, activeWarehouses,
-                        pendingWarehouses, bannedWarehouses);
+                        pendingWarehouses, bannedWarehouses, rejectWarehouses);
 
         // Build top warehouses (top 5 by inventory value)
         List<WarehouseAdminStatisticsResponse.TopWarehouse> topWarehouses = warehouses.stream()
-                .filter(Warehouse::isActive)
+                .filter(Warehouse::isApproved)
                 .map(w -> {
                     BigDecimal value = inventoryQueryRepository.calculateInventoryValue(w.getId());
                     Integer products = inventoryQueryRepository.countProductsInWarehouse(w.getId());
@@ -324,12 +333,12 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
     // ============= Helper Methods =============
 
     private List<WarehouseAdminStatisticsResponse.StatusBreakdown> buildAdminStatusBreakdown(
-            long total, long active, long pending, long banned) {
+            long total, long active, long pending, long banned, long reject) {
 
         return List.of(
                 WarehouseAdminStatisticsResponse.StatusBreakdown.builder()
                         .status(1)
-                        .statusLabel("Active")
+                        .statusLabel("Approve")
                         .count(active)
                         .percentage(total > 0 ? Math.round(active * 10000.0 / total) / 100.0 : 0.0)
                         .build(),
@@ -341,9 +350,15 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
                         .build(),
                 WarehouseAdminStatisticsResponse.StatusBreakdown.builder()
                         .status(2)
-                        .statusLabel("Lock")
+                        .statusLabel("Ban")
                         .count(banned)
                         .percentage(total > 0 ? Math.round(banned * 10000.0 / total) / 100.0 : 0.0)
+                        .build(),
+                WarehouseAdminStatisticsResponse.StatusBreakdown.builder()
+                        .status(2)
+                        .statusLabel("Reject")
+                        .count(reject)
+                        .percentage(total > 0 ? Math.round(reject * 10000.0 / total) / 100.0 : 0.0)
                         .build()
         );
     }

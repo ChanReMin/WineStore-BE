@@ -1,10 +1,9 @@
 package com.example.demo.services.commands.ServiceCommandImpl;
 
-import com.example.demo.commons.enums.ProductStatus;
+import com.example.demo.commons.enums.WarehouseStatus;
 import com.example.demo.services.commands.AdminWarehouseCommandService;
 import com.example.demo.utils.SecurityUtils;
 import com.example.demo.dtos.commands.warehouse.*;
-import com.example.demo.dtos.mappers.warehouse.WarehouseMapper;
 import com.example.demo.dtos.responses.warehouse.*;
 import com.example.demo.entities.Account;
 import com.example.demo.entities.Warehouse;
@@ -12,7 +11,6 @@ import com.example.demo.exceptions.BadRequestException;
 import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.repositories.commands.AccountCommandRepository;
 import com.example.demo.repositories.commands.WarehouseCommandRepository;
-import com.example.demo.repositories.queries.InventoryQueryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,24 +25,22 @@ public class AdminWarehouseCommandServiceImpl implements AdminWarehouseCommandSe
 
     private final WarehouseCommandRepository warehouseCommandRepository;
     private final AccountCommandRepository accountCommandRepository;
-    private final InventoryQueryRepository inventoryQueryRepository;
     private final SecurityUtils securityUtils;
-    private final WarehouseMapper warehouseMapper;
 
     @Transactional(transactionManager = "writeTransactionManager")
     public ApproveWarehouseResponse approveWarehouse(Long warehouseId, ApproveWarehouseRequest request) {
         log.info("✅ [ADMIN] Approving warehouse: {}", warehouseId);
 
         Warehouse warehouse = warehouseCommandRepository.findById(warehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy warehouse request"));
+                .orElseThrow(() -> new ResourceNotFoundException("Warehouse request not found"));
 
-        if (warehouse.isActive()) {
-            throw new BadRequestException("Kho đã được phê duyệt trước đó");
+        if (warehouse.isApproved()) {
+            throw new BadRequestException("Warehouse already approved");
         }
 
         Account admin = getCurrentAccount();
 
-        warehouse.setStatus(ProductStatus.ACTIVE);
+        warehouse.setStatus(WarehouseStatus.APPROVE);
         warehouse.setApprovedBy(admin);
         warehouse.setApprovedAt(LocalDateTime.now());
         if (request != null && request.getNote() != null) {
@@ -54,12 +50,11 @@ public class AdminWarehouseCommandServiceImpl implements AdminWarehouseCommandSe
         Warehouse saved = warehouseCommandRepository.save(warehouse);
         log.info("✅ Warehouse approved successfully");
 
-        // Tạo DTO trực tiếp
         return ApproveWarehouseResponse.builder()
                 .id(saved.getId())
                 .name(saved.getName())
                 .location(saved.getLocation())
-                .status(saved.getStatus().getCode()) // giả sử ProductStatus có getCode()
+                .status(saved.getStatus().getCode())
                 .managerId(saved.getCreatedBy() != null ? saved.getCreatedBy().getId() : null)
                 .updateAt(saved.getUpdatedAt())
                 .build();
@@ -71,10 +66,10 @@ public class AdminWarehouseCommandServiceImpl implements AdminWarehouseCommandSe
         log.info("❌ [ADMIN] Rejecting warehouse: {}", warehouseId);
 
         Warehouse warehouse = warehouseCommandRepository.findById(warehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy warehouse request"));
+                .orElseThrow(() -> new ResourceNotFoundException("Warehouse request not found"));
 
+        warehouse.setStatus(WarehouseStatus.REJECT);
         warehouse.setRejectionReason(request.getReason());
-        warehouse.softDelete();
 
         Warehouse saved = warehouseCommandRepository.save(warehouse);
         log.info("✅ Warehouse request rejected and deleted");
@@ -82,8 +77,7 @@ public class AdminWarehouseCommandServiceImpl implements AdminWarehouseCommandSe
         return RejectWarehouseResponse.builder()
                 .id(saved.getId())
                 .name(saved.getName())
-                .status(0) // giữ là pending
-                .deleted(saved.isDeleted())
+                .status(saved.getStatus().getCode())
                 .rejectionNote(saved.getRejectionReason())
                 .build();
     }
@@ -94,13 +88,13 @@ public class AdminWarehouseCommandServiceImpl implements AdminWarehouseCommandSe
         log.info("🚫 [ADMIN] Banning warehouse: {}", warehouseId);
 
         Warehouse warehouse = warehouseCommandRepository.findById(warehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy kho"));
+                .orElseThrow(() -> new ResourceNotFoundException("Warehouse not found"));
 
         if (warehouse.isBanned()) {
-            throw new BadRequestException("Kho đã bị khóa trước đó");
+            throw new BadRequestException("Warehouse is already banned");
         }
 
-        warehouse.setStatus(ProductStatus.BAN);
+        warehouse.setStatus(WarehouseStatus.BAN);
         warehouse.setBanReason(request.getReason());
         warehouse.setUpdatedAt(LocalDateTime.now());
 
@@ -110,7 +104,7 @@ public class AdminWarehouseCommandServiceImpl implements AdminWarehouseCommandSe
         return BanWarehouseResponse.builder()
                 .id(saved.getId())
                 .name(saved.getName())
-                .status(saved.getStatus().getCode()) // BAN = 2
+                .status(saved.getStatus().getCode())
                 .managerId(saved.getCreatedBy() != null ? saved.getCreatedBy().getId() : null)
                 .updatedAt(saved.getUpdatedAt())
                 .banNote(saved.getBanReason())
@@ -123,13 +117,13 @@ public class AdminWarehouseCommandServiceImpl implements AdminWarehouseCommandSe
         log.info("🔓 [ADMIN] Unbanning warehouse: {}", warehouseId);
 
         Warehouse warehouse = warehouseCommandRepository.findById(warehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy kho"));
+                .orElseThrow(() -> new ResourceNotFoundException("Warehouse not found"));
 
         if (!warehouse.isBanned()) {
-            throw new BadRequestException("Kho không ở trạng thái bị khóa");
+            throw new BadRequestException("Warehouse is not banned");
         }
 
-        warehouse.setStatus(ProductStatus.ACTIVE);
+        warehouse.setStatus(WarehouseStatus.APPROVE);
         warehouse.setBanReason(null); // Clear ban reason
 
         if (request != null && request.getNote() != null) {

@@ -3,6 +3,7 @@ package com.example.demo.services.commands.ServiceCommandImpl;
 import com.example.demo.commons.enums.AccountRole;
 import com.example.demo.commons.enums.AccountStatus;
 import com.example.demo.dtos.commands.user.*;
+import com.example.demo.dtos.responses.user.ChangeUserRoleResponse;
 import com.example.demo.dtos.responses.user.ChangeUserStatusResponse;
 import com.example.demo.dtos.responses.user.RestoreUserResponse;
 import com.example.demo.dtos.responses.user.UpdateAvatarResponse;
@@ -46,27 +47,24 @@ public class UserCommandServiceImpl implements UserCommandService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         validateNotAdmin(account);
-
         User user = account.getUser();
 
-        // Update user name
-        String[] names = request.getName().split(" ", 2);
-        user.setFirstName(names[0]);
-        user.setLastName(names.length > 1 ? names[1] : "");
+        if (request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName());
+        }
 
         // Update phone
-        if (request.getPhone() != null) {
-            user.setPhoneNumber(request.getPhone());
+        if (request.getPhoneNumber() != null) {
+            user.setPhoneNumber(request.getPhoneNumber());
         }
-
-        // Update role
-        if (request.getRole() != null) {
-            account.setRole(parseRole(request.getRole()));
+        if(request.getDateOfBirth() != null) {
+            user.setDateOfBirth(request.getDateOfBirth());
         }
-
-        // Update status
-        if (request.getStatus() != null) {
-            account.setStatus(AccountStatus.fromString(request.getStatus()));
+        if (request.getGender() != null) {
+            user.setGender(request.getGender());
         }
 
         accountCommandRepository.save(account);
@@ -75,6 +73,7 @@ public class UserCommandServiceImpl implements UserCommandService {
     }
 
     @Override
+    @Transactional(transactionManager = "writeTransactionManager")
     public ChangeUserStatusResponse changeUserStatus(Long userId, ChangeUserStatusRequest request) {
         Account account = accountQueryRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -93,6 +92,30 @@ public class UserCommandServiceImpl implements UserCommandService {
         return ChangeUserStatusResponse.builder()
                 .id(account.getId().toString())
                 .status(account.getStatus().name().toLowerCase())
+                .updatedAt(account.getUpdatedAt())
+                .build();
+    }
+
+    @Override
+    @Transactional(transactionManager = "writeTransactionManager")
+    public ChangeUserRoleResponse changeUserRole(Long userId, ChangeUserRoleRequest request) {
+        Account account = accountQueryRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        validateNotAdmin(account);
+
+        AccountRole newRole = AccountRole.fromString(request.getRole());
+        account.setRole(newRole);
+        account = accountCommandRepository.save(account);
+
+        if (request.getReason() != null) {
+            log.info("User {} role changed to {} - Reason: {}",
+                    userId, newRole, request.getReason());
+        }
+
+        return ChangeUserRoleResponse.builder()
+                .id(account.getId().toString())
+                .role(account.getRole().name().toLowerCase())
                 .updatedAt(account.getUpdatedAt())
                 .build();
     }

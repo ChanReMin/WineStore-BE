@@ -29,9 +29,11 @@ public class WarehouseAdminStatisticsResponse {
     public static class Overview {
         private Long totalWarehouses;
 
-        private Long activeWarehouses;
+        private Long approveWarehouses;
 
         private Long pendingWarehouses;
+
+        private Long rejectWarehouses;
 
         private Long bannedWarehouses;
     }

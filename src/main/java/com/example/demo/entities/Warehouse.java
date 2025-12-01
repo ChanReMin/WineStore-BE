@@ -1,6 +1,7 @@
 package com.example.demo.entities;
 
 import com.example.demo.commons.enums.ProductStatus;
+import com.example.demo.commons.enums.WarehouseStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -30,7 +31,7 @@ public class Warehouse extends BaseEntity {
 
     @Enumerated(EnumType.ORDINAL)
     @Column(columnDefinition = "SMALLINT DEFAULT 0", nullable = false)
-    private ProductStatus status; // 0=PENDING, 1=ACTIVE, 2=BANNED
+    private WarehouseStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id", nullable = false)
@@ -61,14 +62,14 @@ public class Warehouse extends BaseEntity {
 
     // Helper methods
     public boolean isPending() {
-        return status == ProductStatus.PENDING;
+        return status == WarehouseStatus.PENDING;
     }
-
-    public boolean isActive() {
-        return status == ProductStatus.ACTIVE;
+    public boolean isReject() {
+        return status == WarehouseStatus.REJECT;
     }
 
     public boolean isBanned() {
-        return status == ProductStatus.BAN;
+        return status == WarehouseStatus.BAN;
     }
+    public boolean isApproved() {return status == WarehouseStatus.APPROVE;}
 }

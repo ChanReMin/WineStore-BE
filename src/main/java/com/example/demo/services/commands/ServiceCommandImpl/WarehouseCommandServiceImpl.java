@@ -1,6 +1,7 @@
 package com.example.demo.services.commands.ServiceCommandImpl;
 
 import com.example.demo.commons.enums.ProductStatus;
+import com.example.demo.commons.enums.WarehouseStatus;
 import com.example.demo.services.commands.WarehouseCommandService;
 import com.example.demo.utils.SecurityUtils;
 import com.example.demo.dtos.commands.warehouse.CreateWarehouseRequest;
@@ -55,7 +56,7 @@ public class WarehouseCommandServiceImpl implements WarehouseCommandService {
                 .location(request.getLocation())
                 .description(request.getDescription())
                 .city(request.getCity())
-                .status(ProductStatus.PENDING)
+                .status(WarehouseStatus.PENDING)
                 .createdBy(currentAccount)
                 .build();
 
@@ -87,7 +88,7 @@ public class WarehouseCommandServiceImpl implements WarehouseCommandService {
         validateOwnership(warehouse);
 
         // Only allow ACTIVE warehouse updates
-        if (!warehouse.isActive()) {
+        if (!warehouse.isApproved()) {
             if (warehouse.isPending()) {
                 throw new ForbiddenException("Not allowed to update pending warehouse");
             }

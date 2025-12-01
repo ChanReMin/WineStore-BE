@@ -154,7 +154,6 @@ public class UserController {
     ) {
         userCommandService.updateUser(userId, request);
 
-        // Query the updated user
         UserDetailResponse data = userQueryService.getUserDetail(userId);
 
         return ResponseEntity.ok(
@@ -182,6 +181,24 @@ public class UserController {
                 SuccessResponse.<ChangeUserStatusResponse>builder()
                         .success(true)
                         .message("User status changed successfully")
+                        .data(data)
+                        .build()
+        );
+    }
+
+    @PatchMapping("/{userId}/role")
+    @Operation(summary = "Admin only")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SuccessResponse<ChangeUserRoleResponse>> changeUserRole(
+            @PathVariable Long userId,
+            @Valid @RequestBody ChangeUserRoleRequest request
+    ) {
+        ChangeUserRoleResponse data = userCommandService.changeUserRole(userId, request);
+
+        return ResponseEntity.ok(
+                SuccessResponse.<ChangeUserRoleResponse>builder()
+                        .success(true)
+                        .message("User role changed successfully")
                         .data(data)
                         .build()
         );
