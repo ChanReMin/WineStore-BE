@@ -1,7 +1,6 @@
 package com.example.demo.services.queries.serviceQueryImpl;
 
-import com.example.demo.commons.enums.InventoryStatus;
-import com.example.demo.commons.enums.ProductStatus;
+import com.example.demo.commons.enums.WarehouseStatus;
 import com.example.demo.exceptions.BadRequestException;
 import com.example.demo.services.queries.WarehouseQueryService;
 import com.example.demo.utils.SecurityUtils;
@@ -79,7 +78,7 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
         );
 
         Page<Warehouse> warehousePage = warehouseQueryRepository.findAllWithFilters(
-                status != null ? ProductStatus.fromCode(status) : null,
+                status != null ? WarehouseStatus.fromCode(status) : null,
                 managerId,
                 search,
                 pageable
@@ -390,9 +389,10 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
 
         WarehouseSellerListResponse.Summary summary = WarehouseSellerListResponse.Summary.builder()
                 .totalWarehouses(warehouseQueryRepository.countByManager(sellerId))
-                .active(warehouseQueryRepository.countByManagerAndStatus(sellerId, ProductStatus.ACTIVE))
-                .pending(warehouseQueryRepository.countByManagerAndStatus(sellerId, ProductStatus.PENDING))
-                .banned(warehouseQueryRepository.countByManagerAndStatus(sellerId, ProductStatus.REJECT))
+                .active(warehouseQueryRepository.countByManagerAndStatus(sellerId, WarehouseStatus.APPROVE))
+                .pending(warehouseQueryRepository.countByManagerAndStatus(sellerId, WarehouseStatus.PENDING))
+                .rejected(warehouseQueryRepository.countByManagerAndStatus(sellerId, WarehouseStatus.REJECT))
+                .banned(warehouseQueryRepository.countByManagerAndStatus(sellerId, WarehouseStatus.BAN))
                 .build();
 
         return WarehouseSellerListResponse.builder()
