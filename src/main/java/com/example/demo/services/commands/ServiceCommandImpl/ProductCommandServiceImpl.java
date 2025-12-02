@@ -148,7 +148,7 @@ public class ProductCommandServiceImpl implements ProductCommandService {
 
         String oldImageUrl = product.getImages();
         boolean uploadingNewFile = request.getImage() != null && !request.getImage().isEmpty();
-        boolean userDeleteImage = request.getImageUrl() != null && request.getImageUrl().trim().isEmpty();
+        boolean userDeleteImage = request.getImages() != null && request.getImages().trim().isEmpty();
 
 
         // Case 1: User WANTS TO DELETE PHOTO

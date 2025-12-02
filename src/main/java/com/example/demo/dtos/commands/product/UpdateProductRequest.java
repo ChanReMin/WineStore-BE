@@ -12,5 +12,5 @@ import org.springframework.web.multipart.MultipartFile;
 public class UpdateProductRequest extends WriteProductRequest{
     private MultipartFile image;
 
-    private String imageUrl;
+    private String images;
 }
