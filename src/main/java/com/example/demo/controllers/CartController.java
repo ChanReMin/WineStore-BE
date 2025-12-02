@@ -2,7 +2,7 @@ package com.example.demo.controllers;
 
 import com.example.demo.dtos.responses.SuccessResponse;
 import com.example.demo.dtos.responses.cart.CartResponse;
-import com.example.demo.services.queries.CartQueryService;
+import com.example.demo.services.queries.serviceQueryImpl.CartQueryServiceImpl;
 import com.example.demo.dtos.commands.cart.AddItemToCartRequest;
 import com.example.demo.dtos.commands.cart.UpdateCartItemQuantityRequest; // New import
 import com.example.demo.dtos.responses.cart.CartItemAddResponse;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CartController {
 
-    private final CartQueryService cartQueryService;
+    private final CartQueryServiceImpl cartQueryService;
     private final CartCommandService cartCommandService;
 
     @GetMapping

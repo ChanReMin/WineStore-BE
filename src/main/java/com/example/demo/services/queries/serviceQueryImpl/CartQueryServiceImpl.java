@@ -1,10 +1,9 @@
-package com.example.demo.services.queries;
+package com.example.demo.services.queries.serviceQueryImpl;
 
 import com.example.demo.dtos.responses.cart.*;
 import com.example.demo.entities.Cart;
 import com.example.demo.entities.CartItem;
 import com.example.demo.entities.Product;
-import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.exceptions.UnauthorizedException;
 import com.example.demo.repositories.queries.CartItemQueryRepository;
 import com.example.demo.repositories.queries.CartQueryRepository;
@@ -23,7 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class CartQueryService {
+public class CartQueryServiceImpl {
 
     private final CartQueryRepository cartQueryRepository;
     private final CartItemQueryRepository cartItemQueryRepository;

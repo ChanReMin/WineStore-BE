@@ -13,4 +13,6 @@ public interface PromotionQueryRepository extends JpaRepository<Promotion, Long>
 
     @EntityGraph(attributePaths = {"promotionProducts", "promotionProducts.product", "promotionProducts.product.category"})
     Optional<Promotion> findById(Long id);
+
+    Optional<Promotion> findByCode(String code);
 }
