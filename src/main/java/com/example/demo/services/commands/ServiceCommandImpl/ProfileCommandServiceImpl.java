@@ -70,43 +70,6 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
         User updatedUser = userCommandRepository.save(user);
         log.info("✅ Profile updated successfully for user: {}", accountId);
 
-        // Handle avatar update asynchronously if new avatar provided
-        if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
-            String oldAvatarUrl = user.getAvatar();
-
-            // Set placeholder immediately
-            updatedUser.setAvatar(cloudinaryService.getPlaceholderUrl());
-            userCommandRepository.save(updatedUser);
-
-            // Upload new avatar asynchronously
-            cloudinaryService.uploadImageAsync(updatedUser.getId(), request.getAvatar())
-                    .thenAccept(newAvatarUrl -> {
-                        log.info("✅ Async avatar upload completed for user {}: {}",
-                                updatedUser.getId(), newAvatarUrl);
-
-                        // Delete old avatar after successful upload
-                        if (oldAvatarUrl != null && !oldAvatarUrl.contains("placeholder")) {
-                            cloudinaryService.deleteImage(oldAvatarUrl);
-                        }
-                    })
-                    .exceptionally(ex -> {
-                        log.error("❌ Async avatar upload failed for user {}", updatedUser.getId(), ex);
-
-                        // Restore old avatar on failure
-                        try {
-                            User u = userQueryRepository.findById(updatedUser.getId()).orElse(null);
-                            if (u != null) {
-                                u.setAvatar(oldAvatarUrl != null ? oldAvatarUrl :
-                                        "https://via.placeholder.com/400x400?text=Upload+Failed");
-                                userCommandRepository.save(u);
-                            }
-                        } catch (Exception e) {
-                            log.error("Failed to restore old avatar", e);
-                        }
-                        return null;
-                    });
-        }
-
         return UpdateProfileResponse.builder()
                 .id(account.getId())
                 .firstName(updatedUser.getFirstName())
@@ -120,11 +83,6 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
     public void changePassword(Long accountId, ChangePasswordRequest request) {
         log.debug("Changing password for user: {}", accountId);
 
-        // Validate password confirmation
-        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new BadRequestException("New password and confirm password do not match");
-        }
-
         Account account = accountQueryRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -136,6 +94,10 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
         // Check if new password is same as old
         if (request.getOldPassword().equals(request.getNewPassword())) {
             throw new BadRequestException("New password must be different from old password");
+        }
+        // Validate password confirmation
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BadRequestException("New password and confirm password do not match");
         }
 
         // Update password

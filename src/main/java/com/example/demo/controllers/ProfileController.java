@@ -60,7 +60,7 @@ public class ProfileController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Update current user profile")
     public ResponseEntity<SuccessResponse<UpdateProfileResponse>> updateProfile(
-            @Valid @ModelAttribute UpdateProfileRequest request
+            @Valid @RequestBody UpdateProfileRequest request
     ) {
         Long currentUserId = SecurityUtils.getCurrentUserUuid();
 
