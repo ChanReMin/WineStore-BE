@@ -16,11 +16,14 @@ import com.example.demo.services.queries.PaymentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClientException; // Import RestClientException
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -33,6 +36,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class MomoService implements PaymentService {
+
+    private static final Logger log = LoggerFactory.getLogger(MomoService.class); // Add logger instance
 
     private final MomoConfig momoConfig;
     private final RestTemplate restTemplate = new RestTemplate();
@@ -56,8 +61,8 @@ public class MomoService implements PaymentService {
         requestBody.put("accessKey", momoConfig.getAccessKey());
         requestBody.put("requestId", requestId);
         requestBody.put("amount", String.valueOf(amount));
-        requestBody.put("orderId", orderId.toString());
-        requestBody.put("orderInfo", orderInfo);
+        requestBody.put("orderId", requestId); // Use requestId for Momo's orderId
+        requestBody.put("orderInfo", orderInfo + " (Internal Order ID: " + orderId + ")"); // Add internal orderId to orderInfo
         requestBody.put("redirectUrl", redirectUrl);
         requestBody.put("ipnUrl", ipnUrl);
         requestBody.put("extraData", extraData);
@@ -67,8 +72,8 @@ public class MomoService implements PaymentService {
                 "&amount=" + amount +
                 "&extraData=" + extraData +
                 "&ipnUrl=" + ipnUrl +
-                "&orderId=" + orderId +
-                "&orderInfo=" + orderInfo +
+                "&orderId=" + requestId + // Use requestId for rawHmac
+                "&orderInfo=" + orderInfo + " (Internal Order ID: " + orderId + ")" + // Update orderInfo in rawHmac
                 "&partnerCode=" + momoConfig.getPartnerCode() +
                 "&redirectUrl=" + redirectUrl +
                 "&requestId=" + requestId +
@@ -82,15 +87,22 @@ public class MomoService implements PaymentService {
 
         try {
             String jsonRequestBody = objectMapper.writeValueAsString(requestBody);
+            log.info("Momo API Request Body: {}", jsonRequestBody); // Log request body
             HttpEntity<String> entity = new HttpEntity<>(jsonRequestBody, headers);
 
             String response = restTemplate.postForObject(momoConfig.getEndpoint(), entity, String.class);
+            log.info("Momo API Raw Response: {}", response); // Log raw response
 
             Map<String, String> responseMap = objectMapper.readValue(response, Map.class);
             return responseMap.get("payUrl");
         } catch (IOException e) {
-            // Handle exception
-            e.printStackTrace();
+            log.error("Error processing Momo API response (IOException): {}", e.getMessage(), e);
+            return null;
+        } catch (RestClientException e) { // Catch RestClientException for HTTP errors
+            log.error("Error communicating with Momo API (RestClientException): {}", e.getMessage(), e);
+            return null;
+        } catch (Exception e) { // Catch any other unexpected exceptions
+            log.error("An unexpected error occurred during Momo payment URL creation: {}", e.getMessage(), e);
             return null;
         }
 
