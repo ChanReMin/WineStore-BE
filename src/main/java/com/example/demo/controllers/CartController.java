@@ -7,7 +7,7 @@ import com.example.demo.dtos.commands.cart.AddItemToCartRequest;
 import com.example.demo.dtos.commands.cart.UpdateCartItemQuantityRequest; // New import
 import com.example.demo.dtos.responses.cart.CartItemAddResponse;
 import com.example.demo.dtos.responses.cart.CartItemUpdateResponse; // New import
-import com.example.demo.services.commands.CartCommandService;
+import com.example.demo.services.commands.ServiceCommandImpl.CartCommandServiceImpl;
 import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class CartController {
 
     private final CartQueryServiceImpl cartQueryService;
-    private final CartCommandService cartCommandService;
+    private final CartCommandServiceImpl cartCommandService;
 
     @GetMapping
     public ResponseEntity<SuccessResponse<CartResponse>> getCart() {
