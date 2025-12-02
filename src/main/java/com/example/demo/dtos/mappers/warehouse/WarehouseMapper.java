@@ -124,8 +124,6 @@ public class WarehouseMapper {
                             .productName(log.getProduct() != null ? log.getProduct().getName() : null)
                             .quantity(log.getQuantity())
                             .userName(userName) // Admin có userName
-                            .referenceId(log.getShipmentId()) // Admin có referenceId
-                            .referenceType(log.getShipmentId() != null ? "order" : null) // Admin có referenceType
                             .createdAt(log.getCreatedAt())
                             .build();
                 })
@@ -159,10 +157,10 @@ public class WarehouseMapper {
                 .location(warehouse.getLocation())
                 .description(warehouse.getDescription())
                 .status(warehouse.getStatus().getCode())
-                .managerId(null) // Admin không cần managerId
-                .manager(managerInfo) // Admin có đầy đủ manager info
+                .managerId(null)
+                .manager(managerInfo)
                 .inventory(inventory)
-                .statistics(statistics) // Admin có statistics
+                .statistics(statistics)
                 .recentLogs(logs)
                 .createdAt(warehouse.getCreatedAt())
                 .updatedAt(warehouse.getUpdatedAt())

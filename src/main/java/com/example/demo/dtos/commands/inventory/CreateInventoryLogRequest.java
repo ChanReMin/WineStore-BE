@@ -24,8 +24,6 @@ public class CreateInventoryLogRequest {
     @Min(value = 1, message = "Quantity must be at least 1")
     private Integer quantity;
 
-    private Long shipmentId; // Optional, for tracking shipments/orders
-
     @Size(max = 500, message = "Note must not exceed 500 characters")
     private String note;
 

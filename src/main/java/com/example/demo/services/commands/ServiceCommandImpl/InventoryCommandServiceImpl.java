@@ -187,7 +187,6 @@ public class InventoryCommandServiceImpl implements InventoryCommandService {
                 .type(InventoryLogType.TRANSFER_IN)
                 .quantity(request.getQuantity())
                 .note(request.getNote())
-                .shipmentId(outLog.getId())
                 .build();
         inventoryLogCommandRepository.save(inLog);
 
