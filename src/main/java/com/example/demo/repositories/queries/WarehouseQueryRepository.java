@@ -1,5 +1,5 @@
 package com.example.demo.repositories.queries;
-import com.example.demo.commons.enums.ProductStatus;
+import com.example.demo.commons.enums.WarehouseStatus;
 import com.example.demo.entities.Account;
 import com.example.demo.entities.Warehouse;
 import org.springframework.data.domain.Page;
@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,7 +45,7 @@ public interface WarehouseQueryRepository extends JpaRepository<Warehouse, Long>
     @Query("SELECT w FROM Warehouse w WHERE w.createdBy = :manager AND w.status = :status AND w.deletedAt IS NULL")
     Page<Warehouse> findByManagerAndStatus(
             @Param("manager") Account manager,
-            @Param("status") ProductStatus status,
+            @Param("status") WarehouseStatus status,
             Pageable pageable);
 
     @EntityGraph(attributePaths = {"createdBy", "createdBy.user"})
@@ -66,7 +65,7 @@ public interface WarehouseQueryRepository extends JpaRepository<Warehouse, Long>
             "AND w.deletedAt IS NULL")
     Page<Warehouse> findByManagerAndStatusWithSearch(
             @Param("manager") Account manager,
-            @Param("status") ProductStatus status,
+            @Param("status") WarehouseStatus status,
             @Param("search") String search,
             Pageable pageable);
 
@@ -82,7 +81,7 @@ public interface WarehouseQueryRepository extends JpaRepository<Warehouse, Long>
             "LOWER(w.location) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
             "w.deletedAt IS NULL")
     Page<Warehouse> findAllWithFilters(
-            @Param("status") ProductStatus status,
+            @Param("status") WarehouseStatus status,
             @Param("managerId") Long managerId,
             @Param("search") String search,
             Pageable pageable);
@@ -95,7 +94,7 @@ public interface WarehouseQueryRepository extends JpaRepository<Warehouse, Long>
 
     @Query("SELECT COUNT(w) FROM Warehouse w WHERE w.createdBy.id = :managerId " +
             "AND w.status = :status AND w.deletedAt IS NULL")
-    long countByManagerAndStatus(@Param("managerId") Long managerId, @Param("status") ProductStatus status);
+    long countByManagerAndStatus(@Param("managerId") Long managerId, @Param("status") WarehouseStatus status);
 
     @Query("SELECT DISTINCT w.city FROM Warehouse w " +
             "WHERE w.city IS NOT NULL " +

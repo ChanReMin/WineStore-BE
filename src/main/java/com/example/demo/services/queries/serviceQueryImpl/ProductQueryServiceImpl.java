@@ -106,12 +106,20 @@ public class ProductQueryServiceImpl implements ProductQueryService {
         if (warehouseId != null && warehouseId <= 0) {
             throw new IllegalArgumentException("warehouseId must be positive");
         }
-        brandQueryRepository.findById(brandId)
-                .orElseThrow(() -> new ResourceNotFoundException("Brand not found"));
-        categoryQueryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
-        warehouseQueryRepository.findById(warehouseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Warehouse not found"));
+        if (brandId != null) {
+            brandQueryRepository.findById(brandId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Brand not found"));
+        }
+
+        if (categoryId != null) {
+            categoryQueryRepository.findById(categoryId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+        }
+
+        if (warehouseId != null) {
+            warehouseQueryRepository.findById(warehouseId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Warehouse not found"));
+        }
 
 
         // Convert status code to enum (only for seller view)

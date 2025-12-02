@@ -1,6 +1,5 @@
 package com.example.demo.entities;
 
-import com.example.demo.commons.enums.ProductStatus;
 import com.example.demo.commons.enums.WarehouseStatus;
 import jakarta.persistence.*;
 import lombok.*;

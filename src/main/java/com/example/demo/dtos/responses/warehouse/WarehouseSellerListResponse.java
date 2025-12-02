@@ -35,6 +35,7 @@ public class WarehouseSellerListResponse {
         private Long totalWarehouses;
         private Long active;
         private Long pending;
+        private Long rejected;
         private Long banned;
     }
 }
