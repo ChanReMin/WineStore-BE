@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional; // Added import for Optional
 
 @Repository
 public interface ProductQueryRepository extends JpaRepository<Product, Long> {
@@ -177,7 +178,8 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.deletedAt IS NULL")
     Long countAllActive();
+    List<Product> findByCategoryIdIn(Collection<Long> categoryIds); // Re-added
     // Custom method to find products by category IDs
-    List<Product> findByCategoryIdIn(Collection<Long> categoryIds);
-
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.inventories WHERE p.id = :productId AND p.deletedAt IS NULL")
+    Optional<Product> findByIdWithInventories(@Param("productId") Long productId);
 }
