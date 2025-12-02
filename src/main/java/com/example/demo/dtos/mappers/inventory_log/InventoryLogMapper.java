@@ -22,7 +22,6 @@ public class InventoryLogMapper {
         return InventoryLog.builder()
                 .type(request.getTypeEnum())
                 .quantity(request.getQuantity())
-                .shipmentId(request.getShipmentId())
                 .note(request.getNote())
                 .build();
     }
@@ -101,19 +100,6 @@ public class InventoryLogMapper {
      * Generate reference code based on log type and shipment ID
      */
     private String generateReferenceCode(InventoryLog log) {
-        if (log.getShipmentId() != null) {
-            switch (log.getType()) {
-                case IN:
-                    return "PO-" + log.getShipmentId();
-                case OUT:
-                    return "ORD-" + log.getShipmentId();
-                case TRANSFER_OUT:
-                case TRANSFER_IN:
-                    return "TRF-" + log.getShipmentId();
-                default:
-                    return null;
-            }
-        }
         return null;
     }
 }

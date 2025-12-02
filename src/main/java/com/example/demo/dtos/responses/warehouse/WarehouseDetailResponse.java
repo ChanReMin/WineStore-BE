@@ -86,8 +86,6 @@ public class WarehouseDetailResponse {
 
         // Admin có thêm các field này
         private String userName;
-        private Long referenceId;
-        private String referenceType;
 
         private LocalDateTime createdAt;
     }
