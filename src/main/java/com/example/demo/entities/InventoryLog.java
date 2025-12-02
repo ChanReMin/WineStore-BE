@@ -31,9 +31,6 @@ public class InventoryLog extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "shipment_id")
-    private Long shipmentId;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private InventoryLogType type; // IN, OUT, ADJUST, RETURN
