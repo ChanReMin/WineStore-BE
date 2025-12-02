@@ -1,17 +1,23 @@
 package com.example.demo.repositories.queries;
 
+import com.example.demo.commons.enums.OrderStatus;
 import com.example.demo.entities.Order;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Repository
-public interface OrderQueryRepository extends JpaRepository<Order, Long> {
-
+public interface OrderQueryRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
     /**
      * Đếm tổng số đơn hàng từ một warehouse
      * Logic: Đếm các order có orderItems chứa products từ warehouse này
@@ -58,4 +64,17 @@ public interface OrderQueryRepository extends JpaRepository<Order, Long> {
             @Param("warehouseId") Long warehouseId,
             @Param("fromDate") LocalDateTime fromDate
     );
+
+    @Query("SELECT o FROM Order o " +
+            "LEFT JOIN FETCH o.orderItems oi " +
+            "LEFT JOIN FETCH oi.product " + // Fetch product for each order item
+            "LEFT JOIN FETCH o.shippingAddress " +
+            "LEFT JOIN FETCH o.paymentTransactions pt " +
+            "LEFT JOIN FETCH pt.paymentMethod " + // Fetch payment method for each transaction
+            "WHERE o.id = :id AND o.user.id = :userId")
+    Optional<Order> findByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
+
+    @EntityGraph(attributePaths = {"orderItems", "shippingAddress"})
+    Page<Order> findAll(Specification<Order> spec, Pageable pageable);
+
 }

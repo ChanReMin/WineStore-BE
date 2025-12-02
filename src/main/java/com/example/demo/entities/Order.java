@@ -2,6 +2,8 @@ package com.example.demo.entities;
 
 import com.example.demo.commons.enums.OrderStatus;
 import com.example.demo.commons.enums.PaymentStatus;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -57,9 +59,10 @@ public class Order extends BaseEntity {
     private LocalDateTime paidAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    private java.util.List<OrderItem> orderItems;
+    private java.util.Set<OrderItem> orderItems;
+
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    private java.util.List<PaymentTransaction> paymentTransactions;
+    private java.util.Set<PaymentTransaction> paymentTransactions;
 }
 
