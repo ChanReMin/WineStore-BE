@@ -39,6 +39,7 @@ public class ProductSellerResponse {
     private String vibration;
     private String afterOpening;
     private String servingTemperature;
+    private String countryOfProduction;
     private String Temperature;
     private Integer soldCount;
     private BigDecimal ratingAverage;
