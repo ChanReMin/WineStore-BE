@@ -64,6 +64,10 @@ public class ProductCommandServiceImpl implements ProductCommandService {
         Brand brand = brandCommandRepository.findById(request.getBrandId())
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + request.getBrandId()));
 
+        if (productCommandRepository.existsByNameAndDeletedAtIsNull(request.getName())) {
+            throw new DuplicateResourceException("Product with name '" + request.getName() + "' already exists", "name");
+        }
+
         // Validate image file first (quick validation)
         if (request.getImage() == null || request.getImage().isEmpty()) {
             throw new IllegalArgumentException("Product image is required");
@@ -137,6 +141,10 @@ public class ProductCommandServiceImpl implements ProductCommandService {
             Brand brand = brandCommandRepository.findById(request.getBrandId())
                     .orElseThrow(() -> new ResourceNotFoundException("Brand not found with id: " + request.getBrandId()));
             product.setBrand(brand);
+        }
+        // Check duplicate name (excluding current product)
+        if (productCommandRepository.existsByNameAndIdNotAndDeletedAtIsNull(request.getName(), id)) {
+            throw new DuplicateResourceException("Product with name '" + request.getName() + "' already exists", "name");
         }
 
         // Update product fields

@@ -1,6 +1,7 @@
 package com.example.demo.entities;
 
 import com.example.demo.commons.enums.InventoryLogType;
+import com.example.demo.utils.InventoryLogTypeConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,9 +32,9 @@ public class InventoryLog extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private InventoryLogType type; // IN, OUT, ADJUST, RETURN
+    @Column(columnDefinition = "SMALLINT")
+    @Convert(converter = InventoryLogTypeConverter.class)
+    private InventoryLogType type;
 
     @Column(nullable = false)
     private Integer quantity;
