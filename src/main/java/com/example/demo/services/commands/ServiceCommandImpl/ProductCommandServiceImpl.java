@@ -21,7 +21,7 @@ import com.example.demo.repositories.commands.CategoryCommandRepository;
 import com.example.demo.repositories.commands.ProductCommandRepository;
 import com.example.demo.services.commands.ProductCommandService;
 import com.example.demo.utils.SecurityUtils;
-import com.example.demo.services.AiService;
+//import com.example.demo.services.AiService;
 import com.example.demo.services.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class ProductCommandServiceImpl implements ProductCommandService {
     private final CategoryCommandRepository categoryCommandRepository;
     private final BrandCommandRepository brandCommandRepository;
     private final AccountCommandRepository accountCommandRepository;
-    private final AiService aiService;
+//    private final AiService aiService;
     private final CloudinaryService cloudinaryService;
     private final ProductMapper productMapper;
     private final SecurityUtils securityUtils;

@@ -12,6 +12,7 @@ import com.example.demo.repositories.commands.OrderCommandRepository;
 import com.example.demo.repositories.commands.PaymentTransactionCommandRepository;
 import com.example.demo.repositories.queries.OrderQueryRepository;
 import com.example.demo.repositories.queries.PaymentMethodQueryRepository;
+import com.example.demo.services.queries.PaymentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

@@ -13,7 +13,7 @@ import com.example.demo.repositories.commands.CartCommandRepository;
 import com.example.demo.repositories.commands.OrderCommandRepository;
 import com.example.demo.repositories.commands.OrderItemCommandRepository;
 import com.example.demo.repositories.queries.*;
-import com.example.demo.services.PaymentService;
+import com.example.demo.services.queries.PaymentService;
 import com.example.demo.services.PaymentServiceFactory;
 import com.example.demo.services.commands.OrderCommandService;
 import com.example.demo.utils.SecurityUtils;
@@ -245,10 +245,23 @@ public class OrderCommandServiceImpl implements OrderCommandService {
         cartCommandRepository.delete(cart); // Or clear items from cart.
         log.info("User cart cleared. Cart ID: {}", cart.getId());
 
-        // 12. Payment gateway integration
-        PaymentService paymentService = paymentServiceFactory.getPaymentService(paymentMethod.getCode());
-        String paymentUrl = paymentService.createPaymentUrl(httpServletRequest, order.getId(), finalAmount.longValue());
-        log.debug("Generated payment URL: {}", paymentUrl);
+        // 12. Handle payment based on method
+        String paymentUrl = null;
+        if (!"COD".equalsIgnoreCase(paymentMethod.getCode())) {
+            // For non-COD payments, generate a payment URL
+            try {
+                PaymentService paymentService = paymentServiceFactory.getPaymentService(paymentMethod.getCode());
+                paymentUrl = paymentService.createPaymentUrl(httpServletRequest, order.getId(), finalAmount.longValue());
+                log.debug("Generated payment URL: {}", paymentUrl);
+            } catch (BadRequestException e) {
+                log.error("Payment method '{}' is not supported.", paymentMethod.getCode(), e);
+                // Re-throw the exception to inform the caller about the unsupported method
+                throw e;
+            }
+        } else {
+            // For COD, no payment URL is needed. The order is already created with UNPAID status.
+            log.info("Order created with COD payment method. No payment URL generated. Order ID: {}", order.getId());
+        }
 
         // 13. Return OrderCreateResponse
         log.info("Order creation completed successfully. Order ID: {}", order.getId());
@@ -277,5 +290,4 @@ public class OrderCommandServiceImpl implements OrderCommandService {
         String sequentialPart = String.format("%04d", (int) (Math.random() * 10000));
         return "ORD-" + datePart + "-" + sequentialPart;
     }
-
 }

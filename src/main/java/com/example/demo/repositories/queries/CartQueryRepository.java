@@ -1,6 +1,8 @@
 package com.example.demo.repositories.queries;
 
 import com.example.demo.entities.Cart;
+import com.example.demo.entities.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,6 +12,9 @@ import java.util.Optional;
 
 @Repository
 public interface CartQueryRepository extends JpaRepository<Cart, Long> {
+    @EntityGraph(attributePaths = {"items"})
+    Optional<Cart> findByUser(User user);
+
     @Query("SELECT c FROM Cart c LEFT JOIN FETCH c.items WHERE c.user.id = :userId")
     Optional<Cart> findByUserId(@Param("userId") Long userId);
 }
