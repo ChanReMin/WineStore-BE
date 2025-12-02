@@ -8,7 +8,7 @@ import lombok.Getter;
 public enum ProductStatus {
     PENDING(0, "Pending"),
     ACTIVE(1, "Active"),
-    BAN(2, "Ban");
+    REJECT(2, "Reject");
 
     private final Integer code;
     private final String description;

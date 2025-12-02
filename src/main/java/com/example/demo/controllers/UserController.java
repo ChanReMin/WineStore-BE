@@ -143,29 +143,6 @@ public class UserController {
     // ==================== COMMAND OPERATIONS (Write) ====================
 
     /**
-     * 3. Update user
-     */
-    @PutMapping("/{userId}")
-    @Operation(summary = "Admin only")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<SuccessResponse<UserDetailResponse>> updateUser(
-            @PathVariable Long userId,
-            @Valid @RequestBody UpdateUserRequest request
-    ) {
-        userCommandService.updateUser(userId, request);
-
-        UserDetailResponse data = userQueryService.getUserDetail(userId);
-
-        return ResponseEntity.ok(
-                SuccessResponse.<UserDetailResponse>builder()
-                        .success(true)
-                        .message("User updated successfully")
-                        .data(data)
-                        .build()
-        );
-    }
-
-    /**
      * 4. Change user status
      */
     @PatchMapping("/{userId}/status")
@@ -279,6 +256,24 @@ public class UserController {
                 SuccessResponse.<UpdateAvatarResponse>builder()
                         .success(true)
                         .message("Avatar updated successfully")
+                        .data(data)
+                        .build()
+        );
+    }
+
+    @PostMapping("/seller-request")
+    @Operation(summary = "Customer only")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<SuccessResponse<SellerRequestResponse>> createRequestSeller(
+            @Valid @RequestBody CreateSellerRequest request
+    ) {
+        Long userId = SecurityUtils.getCurrentUserUuid();
+        SellerRequestResponse data = userCommandService.createSellerRequest(userId, request);
+
+        return ResponseEntity.ok(
+                SuccessResponse.<SellerRequestResponse>builder()
+                        .success(true)
+                        .message("Your seller request has been submitted successfully")
                         .data(data)
                         .build()
         );

@@ -1,6 +1,8 @@
 package com.example.demo.services.queries.serviceQueryImpl;
 
+import com.example.demo.commons.enums.InventoryStatus;
 import com.example.demo.commons.enums.ProductStatus;
+import com.example.demo.exceptions.BadRequestException;
 import com.example.demo.services.queries.WarehouseQueryService;
 import com.example.demo.utils.SecurityUtils;
 import com.example.demo.dtos.mappers.warehouse.WarehouseMapper;
@@ -39,6 +41,7 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
     private final SecurityUtils securityUtils;
     private final WarehouseMapper warehouseMapper;
 
+    @Override
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public Object getWarehouses(Integer status, Long managerId, Integer page,
                                 Integer limit, String search, String sortBy, String sortOrder) {
@@ -46,6 +49,21 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
         Account current = getCurrentAccount();
         boolean isSeller = securityUtils.hasRole("SELLER");
         boolean isAdmin = securityUtils.hasRole("ADMIN");
+
+        if (page < 1) {
+            throw new IllegalArgumentException("Page must be >= 1");
+        }
+        if (limit < 1) {
+            throw new IllegalArgumentException("Limit must be >= 1");
+        }
+
+        if (managerId != null) {
+            accountQueryRepository.findById(managerId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Manager not found"));
+        }
+        if (status != null && (status < 0 || status > 3)) {
+            throw new BadRequestException("Status is invalid");
+        }
 
         if (isSeller) {
             managerId = current.getId();
@@ -374,7 +392,7 @@ public class WarehouseQueryServiceImpl implements WarehouseQueryService {
                 .totalWarehouses(warehouseQueryRepository.countByManager(sellerId))
                 .active(warehouseQueryRepository.countByManagerAndStatus(sellerId, ProductStatus.ACTIVE))
                 .pending(warehouseQueryRepository.countByManagerAndStatus(sellerId, ProductStatus.PENDING))
-                .banned(warehouseQueryRepository.countByManagerAndStatus(sellerId, ProductStatus.BAN))
+                .banned(warehouseQueryRepository.countByManagerAndStatus(sellerId, ProductStatus.REJECT))
                 .build();
 
         return WarehouseSellerListResponse.builder()

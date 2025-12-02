@@ -1,6 +1,8 @@
 package com.example.demo.services.commands.ServiceCommandImpl;
 
 import com.example.demo.commons.enums.ProductStatus;
+import com.example.demo.dtos.commands.product.CreateProductRequest;
+import com.example.demo.dtos.commands.product.UpdateProductRequest;
 import com.example.demo.dtos.commands.product.UpdateProductStatusRequest;
 import com.example.demo.dtos.commands.product.WriteProductRequest;
 import com.example.demo.dtos.mappers.product.ProductMapper;
@@ -41,11 +43,11 @@ public class ProductCommandServiceImpl implements ProductCommandService {
     private final SecurityUtils securityUtils;
 
     @Transactional(transactionManager = "writeTransactionManager")
-    public WriteProductResponse createProduct(WriteProductRequest request) {
+    public WriteProductResponse createProduct(CreateProductRequest request) {
         log.info("🆕 Creating product with name: {}", request.getName());
 
         // Get current user
-        Long Iduser = securityUtils.getCurrentUserUuid();
+        Long Iduser = SecurityUtils.getCurrentUserUuid();
         Account currentUser = accountCommandRepository.findById(Iduser)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -84,6 +86,7 @@ public class ProductCommandServiceImpl implements ProductCommandService {
         Product savedProduct = productCommandRepository.save(product);
         log.info("✅ Product created successfully with id: {} by user: {} and status: PENDING",
                 savedProduct.getId(), Iduser);
+//        aiService.sendProductToAI(savedProduct.getId());
 
         // Upload image asynchronously (non-blocking)
         cloudinaryService.uploadImageAsync(savedProduct.getId(), request.getImage())
@@ -98,17 +101,15 @@ public class ProductCommandServiceImpl implements ProductCommandService {
     }
 
     @Transactional(transactionManager = "writeTransactionManager")
-    public WriteProductResponse updateProduct(Long id, WriteProductRequest request) {
+    public WriteProductResponse updateProduct(Long id, UpdateProductRequest request) {
         log.info("✏️ Updating product with id: {}", id);
 
-        // Get current user
-        Long currentUser = securityUtils.getCurrentUserUuid();
+        Long currentUser = SecurityUtils.getCurrentUserUuid();
         log.info("Current user ID: {}", currentUser);
         // Find product with details to avoid N+1
         Product product = productCommandRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
-        // Check if current user is the creator of this product
         if (product.getCreatedBy() == null ||
                 !securityUtils.isOwner(product.getCreatedBy().getEmail())) {
             throw new ForbiddenException("You don't have permission to update this product");
@@ -141,29 +142,43 @@ public class ProductCommandServiceImpl implements ProductCommandService {
         // Update product fields
         productMapper.updateEntity(product, request);
 
-        // Reset approval status when product is updated
         product.setStatus(ProductStatus.PENDING);
         product.setApprovedAt(null);
         product.setApprovedBy(null);
 
-        // Save updated product to Write DB FIRST (fast response)
-        Product updatedProduct = productCommandRepository.save(product);
-        log.info("Product updated successfully with id: {} by user: {}, status reset to PENDING",
-                updatedProduct.getId(), currentUser);
+        String oldImageUrl = product.getImages();
+        boolean uploadingNewFile = request.getImage() != null && !request.getImage().isEmpty();
+        boolean userDeleteImage = request.getImageUrl() != null && request.getImageUrl().trim().isEmpty();
 
-        // Handle image update asynchronously if new image provided
-        if (request.getImage() != null && !request.getImage().isEmpty()) {
-            String oldImageUrl = product.getImages();
+
+        // Case 1: User WANTS TO DELETE PHOTO
+        if (userDeleteImage) {
+            log.info("🗑 User wants to delete image");
+
+            if (!uploadingNewFile) {
+                throw new IllegalArgumentException("You must upload new image if deleting the old one");
+            }
+
+            product.setImages(null);
+
+            if (oldImageUrl != null && !oldImageUrl.contains("placeholder")) {
+                cloudinaryService.deleteImage(oldImageUrl);
+            }
+        }
+
+        // Case 2: User UPLOAD NEW PHOTO
+        else if (uploadingNewFile) {
+            log.info("📸 User uploading new product image");
 
             // Set placeholder immediately
-            updatedProduct.setImages(cloudinaryService.getPlaceholderUrl());
-            productCommandRepository.save(updatedProduct);
+            product.setImages(cloudinaryService.getPlaceholderUrl());
+            Product tempSaved = productCommandRepository.save(product);
 
             // Upload new image asynchronously
-            cloudinaryService.uploadImageAsync(updatedProduct.getId(), request.getImage())
+            cloudinaryService.uploadImageAsync(tempSaved.getId(), request.getImage())
                     .thenAccept(newImageUrl -> {
                         log.info("✅ Async image update completed for product {}: {}",
-                                updatedProduct.getId(), newImageUrl);
+                                tempSaved.getId(), newImageUrl);
 
                         // Delete old image after successful upload
                         if (oldImageUrl != null && !oldImageUrl.contains("placeholder")) {
@@ -171,11 +186,11 @@ public class ProductCommandServiceImpl implements ProductCommandService {
                         }
                     })
                     .exceptionally(ex -> {
-                        log.error("❌ Async image update failed for product {}", updatedProduct.getId(), ex);
+                        log.error("❌ Async image update failed for product {}", tempSaved.getId(), ex);
 
                         // Restore old image on failure
                         try {
-                            Product p = productCommandRepository.findById(updatedProduct.getId()).orElse(null);
+                            Product p = productCommandRepository.findById(tempSaved.getId()).orElse(null);
                             if (p != null) {
                                 p.setImages(oldImageUrl != null ? oldImageUrl :
                                         "https://via.placeholder.com/800x800?text=Upload+Failed");
@@ -187,7 +202,18 @@ public class ProductCommandServiceImpl implements ProductCommandService {
                         return null;
                     });
         }
+        // Case 3: NO CHANGE TO THE PHOTO (keep the old photo)
+        else {
+            log.info("ℹ️ Keep existing image");
+            if (oldImageUrl == null) {
+                throw new IllegalStateException("Product must have an image");
+            }
+        }
 
+        Product updatedProduct = productCommandRepository.save(product);
+        log.info("Product updated successfully with id: {} by user: {}, status reset to PENDING",
+                updatedProduct.getId(), currentUser);
+//        aiService.sendProductToAI(updatedProduct.getId());
         return productMapper.toCreateResponse(updatedProduct);
     }
 

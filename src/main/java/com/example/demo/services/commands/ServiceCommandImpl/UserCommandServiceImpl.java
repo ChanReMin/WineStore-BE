@@ -3,10 +3,7 @@ package com.example.demo.services.commands.ServiceCommandImpl;
 import com.example.demo.commons.enums.AccountRole;
 import com.example.demo.commons.enums.AccountStatus;
 import com.example.demo.dtos.commands.user.*;
-import com.example.demo.dtos.responses.user.ChangeUserRoleResponse;
-import com.example.demo.dtos.responses.user.ChangeUserStatusResponse;
-import com.example.demo.dtos.responses.user.RestoreUserResponse;
-import com.example.demo.dtos.responses.user.UpdateAvatarResponse;
+import com.example.demo.dtos.responses.user.*;
 import com.example.demo.entities.Account;
 import com.example.demo.entities.Notification;
 import com.example.demo.entities.User;
@@ -22,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -39,38 +35,6 @@ public class UserCommandServiceImpl implements UserCommandService {
     private final NotificationCommandRepository notificationCommandRepository;
     private final CloudinaryService cloudinaryService;
     private final UserCommandRepository userCommandRepository;
-
-    @Override
-    @Transactional(transactionManager = "writeTransactionManager")
-    public void updateUser(Long userId, UpdateUserRequest request) {
-        Account account = accountQueryRepository.findByIdWithUser(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        validateNotAdmin(account);
-        User user = account.getUser();
-
-        if (request.getFirstName() != null) {
-            user.setFirstName(request.getFirstName());
-        }
-        if (request.getLastName() != null) {
-            user.setLastName(request.getLastName());
-        }
-
-        // Update phone
-        if (request.getPhoneNumber() != null) {
-            user.setPhoneNumber(request.getPhoneNumber());
-        }
-        if(request.getDateOfBirth() != null) {
-            user.setDateOfBirth(request.getDateOfBirth());
-        }
-        if (request.getGender() != null) {
-            user.setGender(request.getGender());
-        }
-
-        accountCommandRepository.save(account);
-
-        log.info("Updated user: {}", userId);
-    }
 
     @Override
     @Transactional(transactionManager = "writeTransactionManager")
@@ -246,6 +210,52 @@ public class UserCommandServiceImpl implements UserCommandService {
         return UpdateAvatarResponse.builder()
                 .avatarUrl(newAvatarUrl)
                 .message("Avatar updated successfully")
+                .build();
+    }
+
+    @Override
+    @Transactional(transactionManager = "writeTransactionManager")
+    public SellerRequestResponse createSellerRequest(Long userId, CreateSellerRequest request) {
+        User user = userCommandRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.getAccount().getRole() == AccountRole.SELLER || user.getAccount().getRole() == AccountRole.ADMIN) {
+            throw new BadRequestException("Your account is already a seller or admin");
+        }
+
+        String message = String.format(
+                    "User %s %s (Email: %s) sent a request to become a seller.%s",
+                user.getFirstName() != null ? user.getFirstName() : "",
+                user.getLastName() != null ? user.getLastName() : "",
+                user.getAccount().getEmail(),
+                request.getReason() != null && !request.getReason().isEmpty()
+                        ? "\nReason: " + request.getReason()
+                        : "");
+
+        Notification notification = Notification.builder()
+                .user(user)
+                .title("Request to become a seller from " + user.getAccount().getEmail())
+                .message(message)
+                .status("pending")
+                .isRead(false)
+                .build();
+
+        notificationCommandRepository.save(notification);
+
+        Notification userNotification = Notification.builder()
+                .user(user)
+                .title("Request to become a seller")
+                .message("Your request to become a seller has been successfully sent and is waiting for admin to process.")
+                .status("pending")
+                .isRead(false)
+                .build();
+
+        Notification savedNotification = notificationCommandRepository.save(userNotification);
+
+        return SellerRequestResponse.builder()
+                .requestId(savedNotification.getId())
+                .status("pending")
+                .createdAt(savedNotification.getCreatedAt())
                 .build();
     }
 
