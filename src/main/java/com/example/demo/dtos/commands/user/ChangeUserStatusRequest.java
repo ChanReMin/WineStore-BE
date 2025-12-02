@@ -12,8 +12,8 @@ import lombok.*;
 public class ChangeUserStatusRequest {
 
     @NotBlank(message = "Status is required")
-    @Pattern(regexp = "^(active|inactive|banned)$",
-            message = "Status must be one of: active, inactive, banned")
+    @Pattern(regexp = "^(active|inactive|locked)$",
+            message = "Status must be one of: active, inactive, locked")
     private String status;
 
     private String reason;

@@ -1,6 +1,8 @@
 package com.example.demo.services.queries.serviceQueryImpl;
 
 import com.example.demo.commons.enums.ProductStatus;
+import com.example.demo.entities.Brand;
+import com.example.demo.repositories.queries.*;
 import com.example.demo.services.queries.ProductQueryService;
 import com.example.demo.utils.SecurityUtils;
 import com.example.demo.dtos.mappers.product.ProductMapper;
@@ -8,8 +10,6 @@ import com.example.demo.dtos.responses.product.*;
 import com.example.demo.entities.Account;
 import com.example.demo.entities.Product;
 import com.example.demo.exceptions.ResourceNotFoundException;
-import com.example.demo.repositories.queries.AccountQueryRepository;
-import com.example.demo.repositories.queries.ProductQueryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -36,6 +36,9 @@ public class ProductQueryServiceImpl implements ProductQueryService {
     private final AccountQueryRepository accountRepository;
     private final ProductMapper productMapper;
     private final SecurityUtils securityUtils;
+    private final BrandQueryRepository brandQueryRepository;
+    private final CategoryQueryRepository categoryQueryRepository;
+    private final WarehouseQueryRepository warehouseQueryRepository;
 
     @Override
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
@@ -55,6 +58,13 @@ public class ProductQueryServiceImpl implements ProductQueryService {
         log.info("📋 Fetching products - page: {}, limit: {}, search: {}, status: {}",
                 page, limit, search, status);
 
+        if (page != null && page < 0) {
+            throw new IllegalArgumentException("Page number must be greater than 0");
+        }
+        if (limit != null && limit < 0) {
+            throw new IllegalArgumentException("Limit must be greater than 0");
+        }
+
         // Set defaults
         page = (page != null && page > 0) ? page : 1;
         limit = (limit != null && limit > 0) ? Math.min(limit, 100) : 10;
@@ -64,6 +74,44 @@ public class ProductQueryServiceImpl implements ProductQueryService {
 
         // Determine if seller view (authenticated seller) or customer view
         boolean isSellerView = isAuthenticated() && (hasRole("SELLER") || hasRole("ADMIN"));
+
+        if(status != null && (status < 0 || status > 2)) {
+            throw new IllegalArgumentException("Invalid status value");
+        }
+        if (concentrationFrom != null && concentrationFrom.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("concentrationFrom cannot be negative");
+        }
+        if (concentrationTo != null && concentrationTo.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("concentrationTo cannot be negative");
+        }
+        if( priceFrom != null && priceFrom.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("priceFrom cannot be negative");
+        }
+        if( priceTo != null && priceTo.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("priceTo cannot be negative");
+        }
+        if(concentrationFrom != null && concentrationTo != null && concentrationFrom.compareTo(concentrationTo) > 0) {
+            throw new IllegalArgumentException("concentrationFrom cannot be greater than concentrationTo");
+        }
+        if (priceFrom != null && priceTo != null && priceFrom.compareTo(priceTo) > 0) {
+            throw new IllegalArgumentException("priceFrom cannot be greater than priceTo");
+        }
+        if (categoryId != null && categoryId <= 0) {
+            throw new IllegalArgumentException("categoryId must be positive");
+        }
+        if (brandId != null && brandId <= 0) {
+            throw new IllegalArgumentException("brandId must be positive");
+        }
+        if (warehouseId != null && warehouseId <= 0) {
+            throw new IllegalArgumentException("warehouseId must be positive");
+        }
+        brandQueryRepository.findById(brandId)
+                .orElseThrow(() -> new ResourceNotFoundException("Brand not found"));
+        categoryQueryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+        warehouseQueryRepository.findById(warehouseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Warehouse not found"));
+
 
         // Convert status code to enum (only for seller view)
         ProductStatus productStatus = (status != null && isSellerView)
@@ -135,19 +183,19 @@ public class ProductQueryServiceImpl implements ProductQueryService {
         log.info("🔍 Fetching product with id: {}", productId);
 
         Product product = productQueryRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
         boolean isSellerView = isAuthenticated() && (hasRole("SELLER") || hasRole("ADMIN"));
         boolean isOwner = isOwner(product);
 
         // Customer/Guest view: Only ACTIVE products
         if (!isSellerView && product.getStatus() != ProductStatus.ACTIVE) {
-            throw new ResourceNotFoundException("Không tìm thấy sản phẩm");
+            throw new ResourceNotFoundException("Product not found");
         }
 
         // Seller view: Only owner can see
         if (isSellerView && hasRole("SELLER") && !hasRole("ADMIN") && !isOwner) {
-            throw new ResourceNotFoundException("Không tìm thấy sản phẩm");
+            throw new ResourceNotFoundException("Product not found");
         }
         if (isSellerView) {
             productQueryRepository.fetchPromotionsForProduct(productId);
@@ -166,7 +214,7 @@ public class ProductQueryServiceImpl implements ProductQueryService {
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public Object getRelatedProducts(Long productId) {
         Product product = productQueryRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
         // Find products in same category, excluding current product
         List<Product> relatedProducts = productQueryRepository
@@ -224,12 +272,12 @@ public class ProductQueryServiceImpl implements ProductQueryService {
             total = productQueryRepository.countByCreatedBy(currentUser);
             pending = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.PENDING);
             active = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.ACTIVE);
-            banned = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.BAN);
+            banned = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.REJECT);
         } else {
             total = productQueryRepository.countAllActive();
             pending = productQueryRepository.countByStatus(ProductStatus.PENDING);
             active = productQueryRepository.countByStatus(ProductStatus.ACTIVE);
-            banned = productQueryRepository.countByStatus(ProductStatus.BAN);
+            banned = productQueryRepository.countByStatus(ProductStatus.REJECT);
         }
 
         return ProductListResponse.ProductSummary.builder()

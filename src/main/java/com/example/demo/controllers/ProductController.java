@@ -1,8 +1,6 @@
 package com.example.demo.controllers;
 
-import com.example.demo.dtos.commands.product.AddPromotionsRequest;
-import com.example.demo.dtos.commands.product.UpdateProductStatusRequest;
-import com.example.demo.dtos.commands.product.WriteProductRequest;
+import com.example.demo.dtos.commands.product.*;
 import com.example.demo.dtos.responses.SuccessResponse;
 import com.example.demo.dtos.responses.product.*;
 import com.example.demo.services.commands.ProductCommandService;
@@ -76,7 +74,7 @@ public class ProductController {
         @PreAuthorize("hasRole('SELLER')")
         @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
         public ResponseEntity<SuccessResponse<WriteProductResponse>> createProduct(
-                @Valid @ModelAttribute WriteProductRequest request) {
+                @Valid @ModelAttribute CreateProductRequest request) {
 
                 log.info("📝 Creating product: {}", request.getName());
 
@@ -95,7 +93,7 @@ public class ProductController {
         @PreAuthorize("hasRole('SELLER')")
         public ResponseEntity<SuccessResponse<WriteProductResponse>> updateProduct(
                 @PathVariable Long id,
-                @Valid @ModelAttribute WriteProductRequest request) {
+                @Valid @ModelAttribute UpdateProductRequest request) {
 
         WriteProductResponse product = productCommandService.updateProduct(id, request);
 

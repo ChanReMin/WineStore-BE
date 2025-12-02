@@ -4,7 +4,6 @@ import com.example.demo.dtos.commands.user.ExportUsersRequest;
 import com.example.demo.dtos.responses.user.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 public interface UserQueryService {
     UserListResponse getUsersList(

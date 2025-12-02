@@ -1,18 +1,14 @@
 package com.example.demo.services.commands;
 
 import com.example.demo.dtos.commands.user.*;
-import com.example.demo.dtos.responses.user.ChangeUserRoleResponse;
-import com.example.demo.dtos.responses.user.ChangeUserStatusResponse;
-import com.example.demo.dtos.responses.user.RestoreUserResponse;
-import com.example.demo.dtos.responses.user.UpdateAvatarResponse;
+import com.example.demo.dtos.responses.user.*;
 
 public interface UserCommandService {
-    void updateUser(Long userId, UpdateUserRequest request);
     ChangeUserStatusResponse changeUserStatus(Long userId, ChangeUserStatusRequest request);
     ChangeUserRoleResponse changeUserRole(Long userId, ChangeUserRoleRequest request);
     void deleteUser(Long userId, boolean permanent);
     RestoreUserResponse restoreUser(Long userId);
     BulkActionResponse bulkActions(BulkActionRequest request);
     UpdateAvatarResponse updateAvatar(Long userId, UpdateAvatarRequest avatarFile);
-
+    SellerRequestResponse createSellerRequest(Long userId, CreateSellerRequest request);
 }

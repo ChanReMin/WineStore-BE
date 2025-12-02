@@ -26,10 +26,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,8 +51,32 @@ public class UserQueryServiceImpl implements UserQueryService {
         log.debug("Getting users list with params: page={}, limit={}, search={}, role={}, status={}",
                 page, limit, search, role, status);
 
-        AccountRole roleEnum = parseRole(role);
-        AccountStatus statusEnum = parseStatus(status);
+        if (page < 1) {
+            throw new IllegalArgumentException("Page must be >= 1");
+        }
+        if (limit < 1) {
+            throw new IllegalArgumentException("Limit must be >= 1");
+        }
+
+        // Validate role
+        AccountRole roleEnum = null;
+        if (role != null) {
+            try {
+                roleEnum = AccountRole.valueOf(role.toUpperCase());
+            } catch (IllegalArgumentException ex) {
+                throw new BadRequestException("Invalid role value: " + role);
+            }
+        }
+
+        // Validate status
+        AccountStatus statusEnum = null;
+        if (status != null) {
+            try {
+                statusEnum = AccountStatus.fromString(status);
+            } catch (IllegalArgumentException ex) {
+                throw new BadRequestException("Invalid status value: " + status);
+            }
+        }
 
         log.info("Parsed role: {}, status: {}", roleEnum, statusEnum);
 
@@ -239,6 +260,10 @@ public class UserQueryServiceImpl implements UserQueryService {
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public ExportUsersResponse exportUsers(ExportUsersRequest request) {
         log.debug("Exporting users: format={}", request.getFormat());
+
+        if(request.getFilters().getStartDate().isAfter(request.getFilters().getEndDate())) {
+            throw new BadRequestException("Start date cannot be after end date");
+        }
 
         try {
             byte[] fileContent;

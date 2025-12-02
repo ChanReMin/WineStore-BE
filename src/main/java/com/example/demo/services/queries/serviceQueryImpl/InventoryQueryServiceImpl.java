@@ -1,6 +1,8 @@
 package com.example.demo.services.queries.serviceQueryImpl;
 
 import com.example.demo.commons.enums.InventoryStatus;
+import com.example.demo.exceptions.BadRequestException;
+import com.example.demo.repositories.queries.*;
 import com.example.demo.services.queries.InventoryQueryService;
 import com.example.demo.utils.SecurityUtils;
 import com.example.demo.dtos.responses.inventory.*;
@@ -9,9 +11,6 @@ import com.example.demo.entities.Inventory;
 import com.example.demo.entities.InventoryLog;
 import com.example.demo.exceptions.ForbiddenException;
 import com.example.demo.exceptions.ResourceNotFoundException;
-import com.example.demo.repositories.queries.AccountQueryRepository;
-import com.example.demo.repositories.queries.InventoryLogQueryRepository;
-import com.example.demo.repositories.queries.InventoryQueryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -34,6 +33,8 @@ public class InventoryQueryServiceImpl implements InventoryQueryService {
     private final InventoryQueryRepository inventoryQueryRepository;
     private final InventoryLogQueryRepository inventoryLogQueryRepository;
     private final AccountQueryRepository accountQueryRepository;
+    private final WarehouseQueryRepository warehouseQueryRepository;
+    private final ProductQueryRepository productQueryRepository;
     private final SecurityUtils securityUtils;
 
     @Override
@@ -52,6 +53,29 @@ public class InventoryQueryServiceImpl implements InventoryQueryService {
         String currentUserEmail = securityUtils.getCurrentUserEmail();
         boolean isAdmin = securityUtils.hasRole("ADMIN");
 
+        if (page < 1 && limit < 1) {
+            throw new IllegalArgumentException("Page and limit must be greater than 0");
+        }
+
+        if (warehouseId != null) {
+            warehouseQueryRepository.findById(warehouseId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Warehouse not found"));
+        }
+
+        if (productId != null) {
+            productQueryRepository.findById(productId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        }
+
+        InventoryStatus statusEnum = null;
+        if (status != null && !status.isEmpty()) {
+            try {
+                statusEnum = InventoryStatus.fromCode(status);
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Invalid inventory status value: " + status);
+            }
+        }
+
         Pageable pageable = PageRequest.of(
                 page - 1,
                 Math.min(limit, 100),
@@ -62,21 +86,20 @@ public class InventoryQueryServiceImpl implements InventoryQueryService {
 
         if (isAdmin) {
             inventoryPage = inventoryQueryRepository.findAllWithFilters(
-                    warehouseId, productId, status, search, pageable);
+                    warehouseId, productId, statusEnum != null ? statusEnum.getCode() : null, search, pageable);
         } else {
             Account currentAccount = accountQueryRepository.findByEmail(currentUserEmail)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
             inventoryPage = inventoryQueryRepository.findAllByCreatedByWithFilters(
-                    currentAccount, warehouseId, productId, status, search, pageable);
+                    currentAccount, warehouseId, productId,
+                    statusEnum != null ? statusEnum.getCode() : null, search, pageable);
         }
 
-        // Map to response
         List<InventoryItemResponse> inventory = inventoryPage.getContent().stream()
                 .map(this::toInventoryItemResponse)
                 .collect(Collectors.toList());
 
-        // Build pagination
         InventoryListResponse.PaginationInfo pagination =
                 InventoryListResponse.PaginationInfo.builder()
                         .currentPage(page)
@@ -85,7 +108,6 @@ public class InventoryQueryServiceImpl implements InventoryQueryService {
                         .perPage(limit)
                         .build();
 
-        // Build summary
         InventoryListResponse.SummaryInfo summary = buildSummary(currentUserEmail, isAdmin);
 
         return InventoryListResponse.builder()
@@ -94,6 +116,7 @@ public class InventoryQueryServiceImpl implements InventoryQueryService {
                 .summary(summary)
                 .build();
     }
+
 
     @Override
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)

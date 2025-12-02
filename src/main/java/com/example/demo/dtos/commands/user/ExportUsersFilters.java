@@ -12,9 +12,9 @@ public class ExportUsersFilters {
 
     private String search;
 
-    private String role; // "buyer", "seller", "customer"
+    private String role;
 
-    private String status; // "active", "inactive", "locked"
+    private String status;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate startDate;

@@ -2,7 +2,7 @@ package com.example.demo.dtos.commands.product;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
-import org.springframework.web.multipart.MultipartFile;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 
@@ -10,8 +10,8 @@ import java.math.BigDecimal;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class WriteProductRequest {
+@SuperBuilder
+public abstract class WriteProductRequest {
 
     @NotNull(message = "Category ID is required")
     @Min(value = 1, message = "Category ID must be positive")
@@ -59,10 +59,6 @@ public class WriteProductRequest {
     private String openedWine;
 
     private String useWineCabinet;
-
-    // Single image file upload
-    @NotNull(message = "Product image is required")
-    private MultipartFile image;
 
     @Size(max = 5000, message = "Description must not exceed 5000 characters")
     private String description;

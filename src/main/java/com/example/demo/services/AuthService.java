@@ -24,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Collections;
 
 @Service
@@ -42,9 +43,17 @@ public class AuthService {
     public RegisterResponseDto register(RegisterRequestDto request) {
 
         if (accountQueryRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateResourceException("email", "Email này đã được đăng ký");
+            throw new DuplicateResourceException("email", "Email is already in use");
         }
 
+        LocalDate dob = request.getDateOfBirth();
+        if (dob == null) {
+            throw new IllegalArgumentException("Date of birth is required");
+        }
+
+        if (!dob.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Date of birth cannot be today or in the future");
+        }
 
         var newAccount = Account.builder()
                 .email(request.getEmail())
@@ -60,7 +69,7 @@ public class AuthService {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .phoneNumber(request.getPhoneNumber())
-                .dateOfBirth(request.getDateOfBirth() != null ? request.getDateOfBirth() : null)
+                .dateOfBirth(dob)
                 .gender(request.getGender())
                 .build();
 
@@ -72,6 +81,7 @@ public class AuthService {
                 .role(savedAccount.getRole().name())
                 .build();
     }
+
 
     @Transactional(transactionManager = "writeTransactionManager")
     public LoginResponseDto login(LoginRequestDto request) {
