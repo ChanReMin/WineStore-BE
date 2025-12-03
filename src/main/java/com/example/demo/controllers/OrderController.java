@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/orders")
+@RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
 public class OrderController {
 

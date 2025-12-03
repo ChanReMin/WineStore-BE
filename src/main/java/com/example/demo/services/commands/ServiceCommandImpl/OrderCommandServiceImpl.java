@@ -247,6 +247,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
 
         // 12. Handle payment based on method
         String paymentUrl = null;
+        log.info("User cart cleared. Cart ID: {}", paymentMethod.getCode());
         if (!"COD".equalsIgnoreCase(paymentMethod.getCode())) {
             // For non-COD payments, generate a payment URL
             try {
