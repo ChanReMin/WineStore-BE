@@ -210,4 +210,12 @@ public interface InventoryQueryRepository extends JpaRepository<Inventory, Long>
     @Query("SELECT COUNT(DISTINCT i.product.id) FROM Inventory i " +
             "WHERE i.quantityOnHand IS NULL OR i.quantityOnHand <= 0")
     Long countOutOfStockProducts();
+
+    @EntityGraph(attributePaths = {"product", "warehouse"})
+    @Query("SELECT i FROM Inventory i " +
+            "WHERE (i.quantityOnHand <= i.safetyStock AND i.quantityOnHand > 0) OR " + // Low stock
+            "      (i.quantityOnHand IS NULL OR i.quantityOnHand <= 0) " +             // Out of stock
+            "AND i.deletedAt IS NULL " +
+            "ORDER BY i.quantityOnHand ASC")
+    List<Inventory> findLowAndOutOfStockInventory();
 }

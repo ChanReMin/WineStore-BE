@@ -8,10 +8,6 @@ public enum OrderStatus {
     CONFIRMED(2, "Confirmed"),
     CANCELLED(6, "Cancelled"),
     PAID(3, "Paid");
-//    SHIPPING(4, "Shipping"),
-//    DELIVERED(5, "Delivered"),
-//   ,
-//    RETURNED(7, "Returned");
 
     private final int value;
     private final String description;

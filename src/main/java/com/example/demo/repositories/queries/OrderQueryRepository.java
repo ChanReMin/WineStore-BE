@@ -72,6 +72,10 @@ public interface OrderQueryRepository extends JpaRepository<Order, Long> {
     BigDecimal calculateTotalRevenue(@Param("startDate") LocalDateTime startDate,
                                      @Param("endDate") LocalDateTime endDate);
 
+    @Query("SELECT COALESCE(SUM(o.finalAmount), 0) FROM Order o " +
+            "WHERE o.status NOT IN (com.example.demo.commons.enums.OrderStatus.CANCELLED)")
+    BigDecimal calculateTotalRevenue();
+
     @Query("SELECT COUNT(o) FROM Order o " +
             "WHERE o.createdAt BETWEEN :startDate AND :endDate")
     Long countOrdersByDateRange(@Param("startDate") LocalDateTime startDate,
@@ -88,6 +92,31 @@ public interface OrderQueryRepository extends JpaRepository<Order, Long> {
             "WHERE o.createdAt BETWEEN :startDate AND :endDate")
     Long countUniqueCustomers(@Param("startDate") LocalDateTime startDate,
                               @Param("endDate") LocalDateTime endDate);
+
+    Long countByUserId(@Param("userId") Long userId);
+
+    Long countByStatus(@Param("status") OrderStatus status);
+
+    @Query(value = """
+        SELECT
+            CASE
+                WHEN :period = 'daily' THEN TO_CHAR(o.created_at, 'YYYY-MM-DD')
+                WHEN :period = 'weekly' THEN TO_CHAR(DATE_TRUNC('week', o.created_at), 'YYYY-MM-DD')
+                WHEN :period = 'monthly' THEN TO_CHAR(DATE_TRUNC('month', o.created_at), 'YYYY-MM')
+            END as period_label,
+            COALESCE(SUM(o.final_amount), 0) as total_revenue,
+            COUNT(o.id) as total_orders
+        FROM orders o
+        WHERE o.status NOT IN (6) -- Assuming 6 is CANCELLED status (replace with enum value if possible)
+        AND o.created_at BETWEEN :startDate AND :endDate
+        GROUP BY period_label
+        ORDER BY period_label
+    """, nativeQuery = true)
+    List<Object[]> findRevenueAndOrdersByPeriod(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("period") String period
+    );
 
     // Category Performance
     @Query("SELECT c.id, c.name, COALESCE(SUM(o.finalAmount), 0), COUNT(o) " +
@@ -122,6 +151,6 @@ public interface OrderQueryRepository extends JpaRepository<Order, Long> {
             "WHERE o.id = :id AND o.user.id = :userId")
     Optional<Order> findByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 
-    @EntityGraph(attributePaths = {"orderItems", "shippingAddress"})
+    @EntityGraph(attributePaths = {"orderItems", "shippingAddress", "user", "user.account"})
     Page<Order> findAll(Specification<Order> spec, Pageable pageable);
 }
