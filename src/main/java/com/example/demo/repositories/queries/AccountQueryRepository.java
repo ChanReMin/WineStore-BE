@@ -106,5 +106,11 @@ public interface AccountQueryRepository extends JpaRepository<Account, Long>, Jp
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+    @Query("SELECT COUNT(a) FROM Account a WHERE a.role = :role")
+    Long countByRoleDashboard(@Param("role") AccountRole role);
 
+    @Query("SELECT COUNT(a) FROM Account a " +
+            "WHERE a.role = com.example.demo.commons.enums.AccountRole.SELLER " +
+            "AND a.status = com.example.demo.commons.enums.AccountStatus.ACTIVE")
+    Long countPendingSellerRequests();
 }

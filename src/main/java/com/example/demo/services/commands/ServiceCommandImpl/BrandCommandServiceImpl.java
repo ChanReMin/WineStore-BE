@@ -1,6 +1,6 @@
 package com.example.demo.services.commands.ServiceCommandImpl;
 
-import com.example.demo.dtos.mappers.BrandMapper;
+import com.example.demo.dtos.mappers.brand.BrandMapper;
 import com.example.demo.dtos.responses.brand.BrandListItemResponse;
 import com.example.demo.entities.Brand;
 import com.example.demo.repositories.commands.BrandCommandRepository;

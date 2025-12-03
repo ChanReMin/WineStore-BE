@@ -21,7 +21,15 @@ public interface InventoryLogQueryRepository extends JpaRepository<InventoryLog,
     /**
      * Find inventory log by ID with details
      */
-    @EntityGraph(attributePaths = {"warehouse", "product", "product.createdBy", "user", "user.account"})
+    @EntityGraph(attributePaths = {
+            "warehouse",
+            "warehouse.createdBy",
+            "warehouse.createdBy.user",
+            "product",
+            "product.createdBy",
+            "user",
+            "user.account"
+    })
     @Query("SELECT il FROM InventoryLog il WHERE il.id = :id AND il.deletedAt IS NULL")
     Optional<InventoryLog> findByIdWithDetails(@Param("id") Long id);
 
@@ -128,4 +136,16 @@ public interface InventoryLogQueryRepository extends JpaRepository<InventoryLog,
             "AND il.deletedAt IS NULL " +
             "ORDER BY il.createdAt DESC")
     List<InventoryLog> findTop10ByWarehouseIdOrderByCreatedAtDesc(@Param("warehouseId") Long warehouseId);
+
+    @Query("SELECT il FROM InventoryLog il " +
+            "WHERE il.product.id = :productId " +
+            "AND il.warehouse.id = :warehouseId " +
+            "AND il.createdAt > :afterDate " +
+            "AND il.deletedAt IS NULL " +
+            "ORDER BY il.createdAt ASC")
+    List<InventoryLog> findByProductAndWarehouseAfterDate(
+            @Param("productId") Long productId,
+            @Param("warehouseId") Long warehouseId,
+            @Param("afterDate") LocalDateTime afterDate
+    );
 }

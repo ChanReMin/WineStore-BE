@@ -1,6 +1,7 @@
 package com.example.demo.services.queries.serviceQueryImpl;
 
 import com.example.demo.commons.enums.InventoryLogType;
+import com.example.demo.dtos.responses.inventory.InventoryLogDetailResponse;
 import com.example.demo.services.queries.InventoryLogQueryService;
 import com.example.demo.utils.SecurityUtils;
 import com.example.demo.dtos.mappers.inventory_log.InventoryLogMapper;
@@ -112,11 +113,12 @@ public class InventoryLogQueryServiceImpl implements InventoryLogQueryService {
                 .build();
     }
 
-
+    @Override
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
-    public InventoryLogResponse getInventoryLogById(Long id) {
-        log.info("🔍 Fetching inventory log with id: {}", id);
+    public InventoryLogDetailResponse getInventoryLogDetailById(Long id) {
+        log.info("🔍 Fetching inventory log detail with id: {}", id);
 
+        // Find log with all related entities
         InventoryLog inventoryLog = inventoryLogQueryRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory log not found with id: " + id));
 
@@ -128,8 +130,44 @@ public class InventoryLogQueryServiceImpl implements InventoryLogQueryService {
             }
         }
 
-        return mapToResponse(inventoryLog);
+        // Get current inventory to calculate before/after quantities
+        Inventory currentInventory = inventoryQueryRepository
+                .findByProductIdAndWarehouseId(
+                        inventoryLog.getProduct().getId(),
+                        inventoryLog.getWarehouse().getId()
+                )
+                .orElse(null);
+
+        // Calculate quantity before and after
+        Integer currentQuantity = currentInventory != null ? currentInventory.getQuantityOnHand() : 0;
+        Integer quantityChange = calculateQuantityChange(inventoryLog.getType(), inventoryLog.getQuantity());
+
+        // For this log, we need to reverse calculate what the quantity was before this log
+        Integer quantityBefore = currentQuantity - quantityChange;
+        Integer quantityAfter = currentQuantity;
+
+        // If this is not the most recent log, we need to recalculate
+        // This is a simplified version - in production you might want to query logs after this one
+        List<InventoryLog> laterLogs = inventoryLogQueryRepository
+                .findByProductAndWarehouseAfterDate(
+                        inventoryLog.getProduct().getId(),
+                        inventoryLog.getWarehouse().getId(),
+                        inventoryLog.getCreatedAt()
+                );
+
+        // Adjust for later logs
+        for (InventoryLog laterLog : laterLogs) {
+            int laterChange = calculateQuantityChange(laterLog.getType(), laterLog.getQuantity());
+            quantityAfter -= laterChange;
+            quantityBefore -= laterChange;
+        }
+
+        log.info("✅ Found inventory log detail. Before: {}, Change: {}, After: {}",
+                quantityBefore, quantityChange, quantityAfter);
+
+        return inventoryLogMapper.toDetailResponse(inventoryLog, quantityBefore, quantityAfter);
     }
+
 
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public InventoryStatusResponse getInventoryStatus(Long productId, Long warehouseId) {

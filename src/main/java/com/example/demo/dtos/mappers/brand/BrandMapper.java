@@ -1,4 +1,4 @@
-package com.example.demo.dtos.mappers;
+package com.example.demo.dtos.mappers.brand;
 
 import com.example.demo.entities.Brand;
 import com.example.demo.dtos.responses.brand.BrandListItemResponse;
