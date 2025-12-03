@@ -7,8 +7,8 @@ import lombok.Data;
 @Builder
 public class OrderSummaryResponse {
     private long pending;
-    private long processing;
-    private long shipping;
-    private long completed;
+    private long confirmed;
+    private long paid;
     private long cancelled;
 }
+

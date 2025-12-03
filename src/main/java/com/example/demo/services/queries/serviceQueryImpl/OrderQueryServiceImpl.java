@@ -151,9 +151,8 @@ public class OrderQueryServiceImpl implements OrderQueryService {
 
         OrderSummaryResponse summary = OrderSummaryResponse.builder()
                 .pending(orderQueryRepository.countByStatus(OrderStatus.PENDING))
-                .processing(orderQueryRepository.countByStatus(OrderStatus.PAID))
-                .shipping(orderQueryRepository.countByStatus(OrderStatus.CONFIRMED))
-                .completed(0L) // No direct equivalent in simplified enum
+                .paid(orderQueryRepository.countByStatus(OrderStatus.PAID))
+                .confirmed(orderQueryRepository.countByStatus(OrderStatus.CONFIRMED))
                 .cancelled(orderQueryRepository.countByStatus(OrderStatus.CANCELLED))
                 .build();
 
