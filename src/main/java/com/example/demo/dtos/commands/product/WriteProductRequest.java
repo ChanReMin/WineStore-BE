@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 @SuperBuilder
 public abstract class WriteProductRequest {
 
+
     @NotNull(message = "Category ID is required")
     @Min(value = 1, message = "Category ID must be positive")
     private Long categoryId;

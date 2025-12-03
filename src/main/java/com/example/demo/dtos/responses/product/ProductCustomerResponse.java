@@ -27,6 +27,7 @@ public class ProductCustomerResponse {
     private Integer volume; // capacity
     private String originCountry;
     private String countryOfProduction;
+    private Integer totalInventory;
     private String servingTemperature;
     private String temperature;
     private String wineType;

@@ -260,22 +260,4 @@ public class UserController {
                         .build()
         );
     }
-
-    @PostMapping("/seller-request")
-    @Operation(summary = "Customer only")
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<SuccessResponse<SellerRequestResponse>> createRequestSeller(
-            @Valid @RequestBody CreateSellerRequest request
-    ) {
-        Long userId = SecurityUtils.getCurrentUserUuid();
-        SellerRequestResponse data = userCommandService.createSellerRequest(userId, request);
-
-        return ResponseEntity.ok(
-                SuccessResponse.<SellerRequestResponse>builder()
-                        .success(true)
-                        .message("Your seller request has been submitted successfully")
-                        .data(data)
-                        .build()
-        );
-    }
 }

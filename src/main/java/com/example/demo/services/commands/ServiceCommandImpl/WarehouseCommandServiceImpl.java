@@ -1,8 +1,12 @@
 package com.example.demo.services.commands.ServiceCommandImpl;
 
+import com.example.demo.commons.enums.NotificationStatus;
 import com.example.demo.commons.enums.ProductStatus;
 import com.example.demo.commons.enums.WarehouseStatus;
+import com.example.demo.dtos.notifications.NotificationMessage;
+import com.example.demo.repositories.queries.AccountQueryRepository;
 import com.example.demo.services.commands.WarehouseCommandService;
+import com.example.demo.services.notifications.NotificationProducer;
 import com.example.demo.utils.SecurityUtils;
 import com.example.demo.dtos.commands.warehouse.CreateWarehouseRequest;
 import com.example.demo.dtos.commands.warehouse.UpdateWarehouseRequest;
@@ -18,9 +22,11 @@ import com.example.demo.repositories.commands.AccountCommandRepository;
 import com.example.demo.repositories.commands.WarehouseCommandRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Service
@@ -32,6 +38,11 @@ public class WarehouseCommandServiceImpl implements WarehouseCommandService {
     private final AccountCommandRepository accountCommandRepository;
     private final SecurityUtils securityUtils;
     private final WarehouseMapper warehouseMapper;
+    private final NotificationProducer notificationProducer;
+    private final AccountQueryRepository accountQueryRepository;
+
+    @Value("${application.fe-endpoint}")
+    public String feEndpoint;
 
     /**
      * Create warehouse request (status = PENDING)
@@ -62,6 +73,33 @@ public class WarehouseCommandServiceImpl implements WarehouseCommandService {
 
         Warehouse saved = warehouseCommandRepository.save(warehouse);
         log.info("✅ Warehouse request created with id: {}", saved.getId());
+
+        Long adminId = accountQueryRepository.findFirstAdminId()
+                .orElseThrow(() -> new IllegalStateException("No admin account found"));
+
+        NotificationMessage msg = NotificationMessage.builder()
+                .id(0L)
+                .userId(adminId)
+                .title("WAREHOUSE REQUIRED APPROVAL")
+                .message("A warehouse has been created and required for approval")
+                .status(NotificationStatus.SUCCESS)
+                .itemUrl(feEndpoint + "/admin/warehouse-approval")
+                .createdAt(Instant.now())
+                .build();
+
+        notificationProducer.send(msg);
+
+        Long userId = SecurityUtils.getCurrentUserUuid();
+        NotificationMessage sellerMsg = NotificationMessage.builder()
+                .id(0L)
+                .userId(userId) //SEND NOTIFICATION TO THIS USER
+                .title("WAREHOUSE CREATED SUCCESS")
+                .message("Your warehouse has been created and been pended for admin approval.")
+                .status(NotificationStatus.SUCCESS)
+                .itemUrl(feEndpoint + "/shop/" + saved.getId() + "/" + saved.getName())
+                .createdAt(Instant.now())
+                .build();
+        notificationProducer.send(sellerMsg);
 
         return CreateWarehouseResponse.builder()
                 .id(saved.getId())
@@ -121,6 +159,32 @@ public class WarehouseCommandServiceImpl implements WarehouseCommandService {
 
         Warehouse updated = warehouseCommandRepository.save(warehouse);
         log.info("✅ Warehouse updated successfully");
+
+        Long adminId = accountQueryRepository.findFirstAdminId()
+                .orElseThrow(() -> new IllegalStateException("No admin account found"));
+        NotificationMessage msg = NotificationMessage.builder()
+                .id(0L)
+                .userId(adminId)
+                .title("WAREHOUSE REQUIRED APPROVAL")
+                .message("A warehouse has been created and required for approval")
+                .status(NotificationStatus.SUCCESS)
+                .itemUrl(feEndpoint + "/admin/warehouse-approval")
+                .createdAt(Instant.now())
+                .build();
+
+        notificationProducer.send(msg);
+
+        Long userId = SecurityUtils.getCurrentUserUuid();
+        NotificationMessage sellerMsg = NotificationMessage.builder()
+                .id(0L)
+                .userId(userId) //SEND NOTIFICATION TO THIS USER
+                .title("WAREHOUSE UPDATED SUCCESS")
+                .message("Your warehouse has been updated and been pended for admin approval.")
+                .status(NotificationStatus.SUCCESS)
+                .itemUrl(feEndpoint + "/shop/" + updated.getId() + "/" + updated.getName())
+                .createdAt(Instant.now())
+                .build();
+        notificationProducer.send(sellerMsg);
 
         return UpdateWarehouseResponse.builder()
                 .id(updated.getId())

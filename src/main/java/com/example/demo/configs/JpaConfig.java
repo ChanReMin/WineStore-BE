@@ -21,7 +21,7 @@ import java.util.Properties;
 public class JpaConfig {
 
     /**
-     * Write EntityManager - Cho Command repositories
+     * Write EntityManager - For Command repositories
      */
     @Primary
     @Bean(name = "writeEntityManagerFactory")
@@ -66,7 +66,7 @@ public class JpaConfig {
     }
 
     /**
-     * Read EntityManager - Cho Query repositories
+     * Read EntityManager - For Query repositories
      */
     @Bean(name = "readEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean readEntityManagerFactory(
@@ -106,7 +106,7 @@ public class JpaConfig {
     }
 
     /**
-     * Configuration cho Command Repositories
+     * Configuration for Command Repositories
      */
     @Configuration
     @EnableJpaRepositories(
@@ -118,7 +118,7 @@ public class JpaConfig {
     }
 
     /**
-     * Configuration cho Query Repositories
+     * Configuration for Query Repositories
      */
     @Configuration
     @EnableJpaRepositories(

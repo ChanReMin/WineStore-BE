@@ -32,6 +32,7 @@ public class ProductCustomerDetailResponse {
     private TasteProfile tasteProfile;
     private List<String> foodPairing;
     private String servingTemperature;
+    private Integer totalInventory;
     private String temperature;
     private String wineType;
     private String humidity;
