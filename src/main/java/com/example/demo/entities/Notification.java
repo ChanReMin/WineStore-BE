@@ -1,5 +1,6 @@
 package com.example.demo.entities;
 
+import com.example.demo.commons.enums.NotificationStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,16 +27,13 @@ public class Notification extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
 
-    @Column(length = 20)
-    private String status; // success, error
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    private NotificationStatus status;
 
-    @Column(name = "is_read")
-    private Boolean isRead;
+    @Column(name = "is_read", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    public boolean isRead;
 
-//    @PrePersist
-    protected void setDefaults() {
-        if (isRead == null) {
-            isRead = false;
-        }
-    }
+    @Column(name = "item_url", length = 500)
+    private String itemUrl;
 }
