@@ -3,24 +3,44 @@ package com.example.demo.services.queries.serviceQueryImpl;
 import com.example.demo.commons.enums.OrderStatus;
 import com.example.demo.commons.enums.PaymentStatus;
 import com.example.demo.dtos.queries.order.OrderQueryRequest;
-import com.example.demo.dtos.responses.order.*;
+import com.example.demo.dtos.responses.PaginationResponse;
+import com.example.demo.dtos.responses.order.CouponDetailResponse;
+import com.example.demo.dtos.responses.order.CustomerDetailResponse;
+import com.example.demo.dtos.responses.order.OrderDetailResponse;
+import com.example.demo.dtos.responses.order.OrderItemDetailResponse;
+import com.example.demo.dtos.responses.order.OrderResponse;
+import com.example.demo.dtos.responses.order.OrderSummaryResponse;
+import com.example.demo.dtos.responses.order.OrderTimelineEventResponse;
+import com.example.demo.dtos.responses.order.PaymentMethodDetailResponse;
+import com.example.demo.dtos.responses.order.SellerOrderDetailResponse;
+import com.example.demo.dtos.responses.order.SellerOrderListResponse;
+import com.example.demo.dtos.responses.order.SellerOrderListItemResponse;
+import com.example.demo.dtos.responses.order.SellerOrderItemDetailResponse;
+import com.example.demo.dtos.responses.order.ShippingAddressDetailResponse;
+import com.example.demo.dtos.responses.order.ShippingAddressResponse;
+import com.example.demo.dtos.responses.order.ShippingInfoResponse;
 import com.example.demo.entities.Order;
 import com.example.demo.entities.OrderItem;
 import com.example.demo.entities.PaymentTransaction;
+import com.example.demo.entities.Product;
+import com.example.demo.entities.User;
 import com.example.demo.entities.UserAddress;
+import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.repositories.queries.OrderQueryRepository;
 import com.example.demo.services.queries.OrderQueryService;
-import com.example.demo.exceptions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.criteria.Predicate;
-import java.time.ZoneOffset;
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -76,12 +96,190 @@ public class OrderQueryServiceImpl implements OrderQueryService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public OrderDetailResponse getOrderDetailForCustomer(Long userId, Long orderId) {
         Order order = orderQueryRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found or does not belong to user"));
 
         return mapToOrderDetailResponse(order);
 
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SellerOrderListResponse getOrdersForSeller(OrderQueryRequest request) {
+        Pageable pageable = PageRequest.of(request.getPage() - 1, request.getLimit());
+
+        Specification<Order> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (request.getStatus() != null) {
+                Optional.ofNullable(OrderStatus.fromValue(request.getStatus()))
+                        .ifPresent(status -> predicates.add(criteriaBuilder.equal(root.get("status"), status)));
+            }
+
+            if (request.getPaymentStatus() != null) {
+                Optional.ofNullable(PaymentStatus.fromValue(request.getPaymentStatus()))
+                        .ifPresent(paymentStatus -> predicates.add(criteriaBuilder.equal(root.get("paymentStatus"), paymentStatus)));
+            }
+
+            if (request.getFromDate() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), request.getFromDate().atStartOfDay()));
+            }
+
+            if (request.getToDate() != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("createdAt"), request.getToDate().atStartOfDay().plusDays(1).minusNanos(1)));
+            }
+
+            if (request.getSearch() != null && !request.getSearch().isEmpty()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("orderCode")), "%" + request.getSearch().toLowerCase() + "%"));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<Order> ordersPage = orderQueryRepository.findAll(spec, pageable);
+
+        List<SellerOrderListItemResponse> orderListItems = ordersPage.getContent().stream()
+                .map(this::mapToSellerOrderListItemResponse)
+                .collect(Collectors.toList());
+
+        PaginationResponse pagination = PaginationResponse.builder()
+                .currentPage(ordersPage.getNumber() + 1)
+                .totalPages(ordersPage.getTotalPages())
+                .totalItems(ordersPage.getTotalElements())
+                .perPage(ordersPage.getSize())
+                .build();
+
+        OrderSummaryResponse summary = OrderSummaryResponse.builder()
+                .pending(orderQueryRepository.countByStatus(OrderStatus.PENDING))
+                .paid(orderQueryRepository.countByStatus(OrderStatus.PAID))
+                .confirmed(orderQueryRepository.countByStatus(OrderStatus.CONFIRMED))
+                .cancelled(orderQueryRepository.countByStatus(OrderStatus.CANCELLED))
+                .build();
+
+        return SellerOrderListResponse.builder()
+                .orders(orderListItems)
+                .pagination(pagination)
+                .summary(summary)
+                .build();
+    }
+
+    private SellerOrderListItemResponse mapToSellerOrderListItemResponse(Order order) {
+        // Ensure account is not null before accessing email
+        String customerEmail = (order.getUser() != null && order.getUser().getAccount() != null)
+                ? order.getUser().getAccount().getEmail()
+                : null;
+        String customerPhone = (order.getUser() != null) ? order.getUser().getPhoneNumber() : null;
+
+        CustomerDetailResponse customerDetailResponse = CustomerDetailResponse.builder()
+                .id(order.getUser().getId())
+                .name(order.getUser().getFirstName() + " " + order.getUser().getLastName())
+                .email(customerEmail)
+                .phone(customerPhone)
+                // totalOrders is not needed for list items, only for detail
+                .build();
+
+        // Calculate time remaining to confirm (assuming 24 hours for confirmation)
+        Long timeRemainingToConfirm = null;
+        if (order.getStatus() == OrderStatus.PENDING) {
+            LocalDateTime confirmDeadline = order.getCreatedAt().plusHours(24);
+            if (confirmDeadline.isAfter(LocalDateTime.now())) {
+                timeRemainingToConfirm = Duration.between(LocalDateTime.now(), confirmDeadline).getSeconds();
+            } else {
+                timeRemainingToConfirm = 0L; // Deadline passed
+            }
+        }
+
+        return SellerOrderListItemResponse.builder()
+                .id(order.getId())
+                .orderCode(order.getOrderCode())
+                .customer(customerDetailResponse)
+                .status(order.getStatus().getValue())
+                .statusText(order.getStatus().name())
+                .paymentStatus(order.getPaymentStatus().getValue())
+                .paymentStatusText(order.getPaymentStatus().getDescription())
+                .totalAmount(order.getTotalAmount())
+                .discountAmount(order.getDiscountAmount())
+                .finalAmount(order.getFinalAmount())
+                .itemsCount(order.getOrderItems() != null ? order.getOrderItems().size() : 0)
+                .createdAt(order.getCreatedAt().atOffset(ZoneOffset.UTC))
+                .timeRemainingToConfirm(timeRemainingToConfirm)
+                .build();
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public SellerOrderDetailResponse getOrderDetailForSeller(Long orderId) {
+        Order order = orderQueryRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        return mapToSellerOrderDetailResponse(order);
+    }
+
+    private SellerOrderDetailResponse mapToSellerOrderDetailResponse(Order order) {
+        List<SellerOrderItemDetailResponse> itemDetails = order.getOrderItems().stream()
+                .map(this::mapToSellerOrderItemDetailResponse)
+                .collect(Collectors.toList());
+
+        BigDecimal totalProfit = itemDetails.stream()
+                .map(SellerOrderItemDetailResponse::getProfit)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        User customer = order.getUser();
+        CustomerDetailResponse customerDetailResponse = CustomerDetailResponse.builder()
+                .id(customer.getId())
+                .name(customer.getFirstName() + " " + customer.getLastName())
+                .email(customer.getAccount().getEmail())
+                .phone(customer.getPhoneNumber())
+                .totalOrders(orderQueryRepository.countByUserId(customer.getId()))
+                .build();
+
+        ShippingAddressDetailResponse shippingAddressDetail = null;
+        if (order.getShippingAddress() != null) {
+            shippingAddressDetail = mapToShippingAddressDetailResponse(order.getShippingAddress());
+        }
+
+        return SellerOrderDetailResponse.builder()
+                .id(order.getId())
+                .orderCode(order.getOrderCode())
+                .customer(customerDetailResponse)
+                .status(order.getStatus().getValue())
+                .statusText(order.getStatus().name())
+                .items(itemDetails)
+                .totalAmount(order.getTotalAmount())
+                .discountAmount(order.getDiscountAmount())
+                .finalAmount(order.getFinalAmount())
+                .totalProfit(totalProfit)
+                .shippingAddress(shippingAddressDetail)
+                .internalNote(null) // Not implemented
+                .build();
+    }
+
+    private SellerOrderItemDetailResponse mapToSellerOrderItemDetailResponse(OrderItem orderItem) {
+        Product product = orderItem.getProduct();
+        BigDecimal costPrice = product.getCostPrice() != null ? product.getCostPrice() : BigDecimal.ZERO;
+        BigDecimal profit = (orderItem.getUnitPrice().subtract(costPrice)).multiply(new BigDecimal(orderItem.getQuantity()));
+
+        Long warehouseId = null;
+        if (product.getInventories() != null && !product.getInventories().isEmpty()) {
+            warehouseId = product.getInventories().get(0).getWarehouse().getId();
+        }
+
+
+        return SellerOrderItemDetailResponse.builder()
+                .id(orderItem.getId())
+                .productId(product.getId())
+                .productName(product.getName())
+                .productSku(product.getSku())
+                .quantity(orderItem.getQuantity())
+                .unitPrice(orderItem.getUnitPrice())
+                .costPrice(costPrice)
+                .lineTotal(orderItem.getLineTotal())
+                .profit(profit)
+                .warehouseId(warehouseId)
+                .build();
     }
 
     private OrderResponse mapToOrderResponse(Order order) {

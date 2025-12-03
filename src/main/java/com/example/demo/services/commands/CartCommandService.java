@@ -18,8 +18,15 @@ import com.example.demo.repositories.commands.CartItemCommandRepository;
 import com.example.demo.repositories.queries.CartQueryRepository;
 import com.example.demo.repositories.queries.CartItemQueryRepository;
 import com.example.demo.repositories.queries.UserQueryRepository; // Import UserQueryRepository
+import com.example.demo.exceptions.UnauthorizedException;
+import com.example.demo.repositories.commands.CartCommandRepository;
+import com.example.demo.repositories.commands.CartItemCommandRepository;
+import com.example.demo.repositories.queries.CartQueryRepository;
+import com.example.demo.repositories.queries.CartItemQueryRepository;
+import com.example.demo.repositories.queries.UserQueryRepository;
 import com.example.demo.services.queries.ProductQueryService;
 import com.example.demo.utils.SecurityUtils;
+import jakarta.persistence.EntityManager; // Re-inject EntityManager
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,7 +46,8 @@ public class CartCommandService {
     private final CartQueryRepository cartQueryRepository;
     private final CartItemQueryRepository cartItemQueryRepository;
     private final ProductQueryService productQueryService;
-    private final UserQueryRepository userQueryRepository; // Inject UserQueryRepository
+    private final UserQueryRepository userQueryRepository;
+    private final EntityManager entityManager; // Inject EntityManager // Inject UserQueryRepository
 
     @Transactional
     public CartItemAddResponse addItemToCart(AddItemToCartRequest request) {
@@ -135,11 +143,11 @@ public class CartCommandService {
 
         // Validate new quantity
         int newQuantity = request.getQuantity();
-        if (newQuantity <= 0) { // Although @Min(1) handles this, good to have server-side check
+        if (newQuantity <= 0) {
             throw new ConflictException("Quantity must be greater than 0.");
         }
 
-        Product product = cartItem.getProduct(); // Product is eagerly loaded with CartItem
+        Product product = cartItem.getProduct();
 
         if (product.getStatus() != ProductStatus.ACTIVE) {
             throw new GoneException("The product has been discontinued or no longer exists.");
@@ -153,30 +161,23 @@ public class CartCommandService {
             throw new ConflictException("Quantity exceeds the allowed limit",
                     new ConflictException.ConflictData(availableQuantity, newQuantity));
         }
-        // Additional business rule: Max 50 items per user's cart (total quantity, not distinct items)
-        // This rule is about total quantity of *this* specific product within the cart, not distinct items.
-        // The prompt says "Mỗi người dùng có thể có tối đa 50 items trong giỏ" which implies total distinct items.
-        // However, "Mỗi sản phẩm có số lượng tối đa cho phép (max_quantity)" means for each product, there's a limit.
-        // Let's assume the 50 items limit is for each *cart_item*, i.e., 50 units of a single product.
-        // If it means total count of CartItems (distinct products), then `userCart.getItems().size()` would be relevant.
-        // If it means total aggregated quantity across all CartItems in the Cart, that's different.
-        // Based on the error response "Số lượng vượt quá giới hạn cho phép", it refers to the available_quantity vs requested_quantity.
-        // The prompt later says "Mỗi sản phẩm có số lượng tối đa cho phép (max_quantity)". This max_quantity is likely linked to inventory.
-
-        // I will assume the "max_quantity" is handled by the `availableQuantity` check.
-        // If a separate max_quantity (e.g., 50) is to be applied to each product regardless of stock,
-        // that would need to be stored on the Product entity or configured globally.
-        // For now, I will interpret "Mỗi người dùng có thể có tối đa 50 items trong giỏ" as a soft limit
-        // which may not cause a hard error at this stage, or it refers to the `availableQuantity` of the product.
-        // Let's assume for now that the 50 item limit is per-product, and covered by `availableQuantity`.
 
         // Update quantity
         cartItem.setQuantity(newQuantity);
         cartItem.setUpdatedAt(LocalDateTime.now());
+
+        // Save the cart item
         cartItemCommandRepository.save(cartItem);
 
+        // Flush to ensure changes are written to database immediately
+        entityManager.flush();
+
+        // Update cart's timestamp
         userCart.setUpdatedAt(LocalDateTime.now());
         cartCommandRepository.save(userCart);
+
+        // Flush again to ensure cart update is saved
+        entityManager.flush();
 
         return CartItemUpdateResponse.builder()
                 .cartItemId(cartItem.getId())
