@@ -214,56 +214,6 @@ public class UserCommandServiceImpl implements UserCommandService {
                 .build();
     }
 
-    @Override
-    @Transactional(transactionManager = "writeTransactionManager")
-    public SellerRequestResponse createSellerRequest(Long userId, CreateSellerRequest request) {
-        User user = userCommandRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        if (user.getAccount().getRole() == AccountRole.SELLER || user.getAccount().getRole() == AccountRole.ADMIN) {
-            throw new BadRequestException("Your account is already a seller or admin");
-        }
-
-        String message = String.format(
-                    "User %s %s (Email: %s) sent a request to become a seller.%s",
-                user.getFirstName() != null ? user.getFirstName() : "",
-                user.getLastName() != null ? user.getLastName() : "",
-                user.getAccount().getEmail(),
-                request.getReason() != null && !request.getReason().isEmpty()
-                        ? "\nReason: " + request.getReason()
-                        : "");
-
-        //Send notifications to admin
-        Long adminId = accountQueryRepository.findFirstAdminId()
-                .orElseThrow(() -> new IllegalStateException("No admin account found"));
-            NotificationMessage msg = NotificationMessage.builder()
-                    .id(0L)
-                    .userId(adminId)      // ID của từng admin
-                    .title("Seller request")
-                    .message("Request to become a seller from " + user.getAccount().getEmail())
-                    .status(NotificationStatus.SUCCESS)
-                    .itemUrl("https://example.com/test/item/123")
-                    .createdAt(Instant.now())
-                    .build();
-            notificationProducer.send(msg);
-
-        Notification userNotification = Notification.builder()
-                .user(user)
-                .title("Request to become a seller")
-                .message("Your request to become a seller has been successfully sent and is waiting for admin to process.")
-                .status(NotificationStatus.SUCCESS)
-                .isRead(false)
-                .build();
-
-        Notification savedNotification = notificationCommandRepository.save(userNotification);
-
-        return SellerRequestResponse.builder()
-                .requestId(savedNotification.getId())
-                .status("pending")
-                .createdAt(savedNotification.getCreatedAt())
-                .build();
-    }
-
     // Private helper methods for bulk actions
 
     private int handleBulkUpdateStatus(List<Long> userIds, Map<Long, Account> accountMap,

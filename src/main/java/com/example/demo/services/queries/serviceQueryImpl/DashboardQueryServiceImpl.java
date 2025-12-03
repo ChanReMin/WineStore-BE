@@ -185,9 +185,9 @@ public class DashboardQueryServiceImpl implements DashboardQueryService {
         Long total = productQueryRepository.count();
 
         // FIX: Use countByStatusCode() with Integer parameter instead of countByStatus()
-        Long active = productQueryRepository.countByStatusCode(ProductStatus.ACTIVE.getCode());
-        Long pendingApproval = productQueryRepository.countByStatusCode(ProductStatus.PENDING.getCode());
-        Long rejected = productQueryRepository.countByStatusCode(ProductStatus.REJECT.getCode());
+        Long active = productQueryRepository.countByStatus(ProductStatus.ACTIVE);
+        Long pendingApproval = productQueryRepository.countByStatus(ProductStatus.PENDING);
+        Long rejected = productQueryRepository.countByStatus(ProductStatus.REJECT);
         Long outOfStock = productQueryRepository.countOutOfStock();
 
         return ProductsDTO.builder()

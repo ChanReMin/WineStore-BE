@@ -14,7 +14,7 @@ import javax.sql.DataSource;
 public class DataSourceConfig {
 
     /**
-     * Write DataSource - Chỉ dùng cho Command (Write operations)
+     * Write DataSource - Only for Command (Write operations)
      */
     @Primary
     @Bean(name = "writeDataSource")
@@ -45,7 +45,7 @@ public class DataSourceConfig {
     }
 
     /**
-     * Read DataSource - Chỉ dùng cho Query (Read operations)
+     * Read DataSource - Only for Query (Read operations)
      */
     @Bean(name = "readDataSource")
     @ConfigurationProperties(prefix = "spring.datasource.read")
@@ -68,7 +68,7 @@ public class DataSourceConfig {
         dataSource.setReadOnly(true);
         dataSource.addDataSourceProperty("readOnly", "true");
 
-        // Connection pool settings (có thể tăng hơn write vì read nhiều hơn)
+        // Connection pool settings (can increase more than write because read is more)
         dataSource.setMaximumPoolSize(20);
         dataSource.setMinimumIdle(10);
         dataSource.setConnectionTimeout(30000);

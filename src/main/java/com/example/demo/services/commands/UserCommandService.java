@@ -10,5 +10,4 @@ public interface UserCommandService {
     RestoreUserResponse restoreUser(Long userId);
     BulkActionResponse bulkActions(BulkActionRequest request);
     UpdateAvatarResponse updateAvatar(Long userId, UpdateAvatarRequest avatarFile);
-    SellerRequestResponse createSellerRequest(Long userId, CreateSellerRequest request);
 }

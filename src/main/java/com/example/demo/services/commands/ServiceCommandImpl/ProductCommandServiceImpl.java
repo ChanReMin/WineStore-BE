@@ -102,7 +102,7 @@ public class ProductCommandServiceImpl implements ProductCommandService {
         Product savedProduct = productCommandRepository.save(product);
         log.info("✅ Product created successfully with id: {} by user: {} and status: PENDING",
                 savedProduct.getId(), Iduser);
-//        aiService.sendProductToAI(savedProduct.getId());
+        aiService.sendProductToAI(savedProduct.getId());
 
         // Upload image asynchronously (non-blocking)
         cloudinaryService.uploadImageAsync(savedProduct.getId(), request.getImage())
@@ -262,7 +262,36 @@ public class ProductCommandServiceImpl implements ProductCommandService {
         Product updatedProduct = productCommandRepository.save(product);
         log.info("Product updated successfully with id: {} by user: {}, status reset to PENDING",
                 updatedProduct.getId(), currentUser);
-//        aiService.sendProductToAI(updatedProduct.getId());
+
+        //Send notification to Admin
+        Long adminId = accountQueryRepository.findFirstAdminId()
+                .orElseThrow(() -> new IllegalStateException("No admin account found"));
+
+        NotificationMessage msg = NotificationMessage.builder()
+                .id(0L)
+                .userId(adminId)
+                .title("PRODUCT REQUIRED APPROVAL")
+                .message("A product has been created and required for approval")
+                .status(NotificationStatus.SUCCESS)
+                .itemUrl(feEndpoint + "/admin/product-approval")
+                .createdAt(Instant.now())
+                .build();
+
+        notificationProducer.send(msg);
+
+        //Send notification to creator
+        Long userId = SecurityUtils.getCurrentUserUuid();
+        NotificationMessage sellerMsg = NotificationMessage.builder()
+                .id(0L)
+                .userId(userId) //SEND NOTIFICATION TO THIS USER
+                .title("PRODUCT UPDATED SUCCESS")
+                .message("Your product has been updated and been pended for admin approval.")
+                .status(NotificationStatus.SUCCESS)
+                .itemUrl(feEndpoint + "/shop/" + updatedProduct.getId() + "/" + updatedProduct.getSlug())
+                .createdAt(Instant.now())
+                .build();
+        notificationProducer.send(sellerMsg);
+        aiService.updateProductInAI(updatedProduct.getId());
         return productMapper.toCreateResponse(updatedProduct);
     }
 

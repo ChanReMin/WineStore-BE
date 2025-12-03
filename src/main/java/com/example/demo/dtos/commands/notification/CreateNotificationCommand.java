@@ -7,7 +7,6 @@ import lombok.Value;
 @Value
 @Builder
 public class CreateNotificationCommand {
-
     String title;
     String message;
     NotificationStatus status;
