@@ -22,7 +22,7 @@ import com.example.demo.repositories.commands.ProductCommandRepository;
 import com.example.demo.repositories.queries.AccountQueryRepository;
 import com.example.demo.services.commands.ProductCommandService;
 import com.example.demo.utils.SecurityUtils;
-//import com.example.demo.services.AiService;
+import com.example.demo.services.AiService;
 import com.example.demo.services.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +44,7 @@ public class ProductCommandServiceImpl implements ProductCommandService {
     private final CategoryCommandRepository categoryCommandRepository;
     private final BrandCommandRepository brandCommandRepository;
     private final AccountCommandRepository accountCommandRepository;
-//    private final AiService aiService;
+    private final AiService aiService;
     private final CloudinaryService cloudinaryService;
     private final ProductMapper productMapper;
     private final SecurityUtils securityUtils;
@@ -102,7 +102,7 @@ public class ProductCommandServiceImpl implements ProductCommandService {
         Product savedProduct = productCommandRepository.save(product);
         log.info("✅ Product created successfully with id: {} by user: {} and status: PENDING",
                 savedProduct.getId(), Iduser);
-//        aiService.sendProductToAI(savedProduct.getId());
+        aiService.sendProductToAI(savedProduct.getId());
 
         // Upload image asynchronously (non-blocking)
         cloudinaryService.uploadImageAsync(savedProduct.getId(), request.getImage())
@@ -291,7 +291,7 @@ public class ProductCommandServiceImpl implements ProductCommandService {
                 .createdAt(Instant.now())
                 .build();
         notificationProducer.send(sellerMsg);
-//        aiService.updateProductInAI(updatedProduct.getId());
+        aiService.updateProductInAI(updatedProduct.getId());
         return productMapper.toCreateResponse(updatedProduct);
     }
 
