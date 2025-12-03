@@ -19,6 +19,7 @@ import com.example.demo.repositories.commands.BrandCommandRepository;
 import com.example.demo.repositories.commands.AccountCommandRepository;
 import com.example.demo.repositories.commands.CategoryCommandRepository;
 import com.example.demo.repositories.commands.ProductCommandRepository;
+import com.example.demo.repositories.queries.AccountQueryRepository;
 import com.example.demo.services.commands.ProductCommandService;
 import com.example.demo.utils.SecurityUtils;
 import com.example.demo.services.AiService;
@@ -27,6 +28,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.beans.factory.annotation.Value;
+import com.example.demo.commons.enums.NotificationStatus;
+import com.example.demo.dtos.notifications.NotificationMessage;
+import com.example.demo.services.notifications.NotificationProducer;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +48,11 @@ public class ProductCommandServiceImpl implements ProductCommandService {
     private final CloudinaryService cloudinaryService;
     private final ProductMapper productMapper;
     private final SecurityUtils securityUtils;
+    private final NotificationProducer notificationProducer;
+    private final AccountQueryRepository accountQueryRepository;
+
+    @Value("${application.fe-endpoint}")
+    public String feEndpoint;
 
     @Transactional(transactionManager = "writeTransactionManager")
     public WriteProductResponse createProduct(CreateProductRequest request) {
@@ -100,6 +112,35 @@ public class ProductCommandServiceImpl implements ProductCommandService {
                     log.error("❌ Async image upload failed for product {}", savedProduct.getId(), ex);
                     return null;
                 });
+
+        //Send notification to Admin
+        Long adminId = accountQueryRepository.findFirstAdminId()
+                .orElseThrow(() -> new IllegalStateException("No admin account found"));
+
+        NotificationMessage msg = NotificationMessage.builder()
+                .id(0L)
+                .userId(adminId)
+                .title("PRODUCT REQUIRED APPROVAL")
+                .message("A product has been created and required for approval")
+                .status(NotificationStatus.SUCCESS)
+                .itemUrl(feEndpoint + "/admin/product-approval")
+                .createdAt(Instant.now())
+                .build();
+
+        notificationProducer.send(msg);
+
+        //Send notification to creator
+        Long userId = SecurityUtils.getCurrentUserUuid();
+        NotificationMessage sellerMsg = NotificationMessage.builder()
+                .id(0L)
+                .userId(userId) //SEND NOTIFICATION TO THIS USER
+                .title("PRODUCT CREATED SUCCESS")
+                .message("Your product has been created and been pended for admin approval.")
+                .status(NotificationStatus.SUCCESS)
+                .itemUrl(feEndpoint + "/shop/" + savedProduct.getId() + "/" + savedProduct.getSlug())
+                .createdAt(Instant.now())
+                .build();
+        notificationProducer.send(sellerMsg);
 
         return productMapper.toCreateResponse(savedProduct);
     }

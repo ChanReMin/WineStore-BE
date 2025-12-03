@@ -59,7 +59,7 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserAddress> addresses;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Order> orders;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)

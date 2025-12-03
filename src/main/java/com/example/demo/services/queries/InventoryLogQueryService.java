@@ -1,5 +1,6 @@
 package com.example.demo.services.queries;
 
+import com.example.demo.dtos.responses.inventory.InventoryLogDetailResponse;
 import com.example.demo.dtos.responses.inventory.InventoryLogListResponse;
 import com.example.demo.dtos.responses.inventory.InventoryLogResponse;
 import com.example.demo.dtos.responses.inventory.InventoryStatusResponse;
@@ -15,9 +16,7 @@ public interface InventoryLogQueryService {
             String fromDate,
             String toDate);
 
-    InventoryLogResponse getInventoryLogById(Long id);
+    InventoryLogDetailResponse getInventoryLogDetailById(Long id);
 
     InventoryStatusResponse getInventoryStatus(Long productId, Long warehouseId);
-
-
 }

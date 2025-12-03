@@ -2,7 +2,9 @@ package com.example.demo.services.commands.ServiceCommandImpl;
 
 import com.example.demo.commons.enums.AccountRole;
 import com.example.demo.commons.enums.AccountStatus;
+import com.example.demo.commons.enums.NotificationStatus;
 import com.example.demo.dtos.commands.user.*;
+import com.example.demo.dtos.notifications.NotificationMessage;
 import com.example.demo.dtos.responses.user.*;
 import com.example.demo.entities.Account;
 import com.example.demo.entities.Notification;
@@ -15,11 +17,13 @@ import com.example.demo.repositories.commands.UserCommandRepository;
 import com.example.demo.repositories.queries.AccountQueryRepository;
 import com.example.demo.services.CloudinaryService;
 import com.example.demo.services.commands.UserCommandService;
+import com.example.demo.services.notifications.NotificationProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +39,7 @@ public class UserCommandServiceImpl implements UserCommandService {
     private final NotificationCommandRepository notificationCommandRepository;
     private final CloudinaryService cloudinaryService;
     private final UserCommandRepository userCommandRepository;
+    private final NotificationProducer notificationProducer;
 
     @Override
     @Transactional(transactionManager = "writeTransactionManager")
@@ -156,10 +161,6 @@ public class UserCommandServiceImpl implements UserCommandService {
                     successCount = handleBulkDelete(userIds, accountMap, request.getData(), results);
                     break;
 
-                case "send_notification":
-                    successCount = handleBulkSendNotification(userIds, accountMap, request.getData(), results);
-                    break;
-
                 default:
                     throw new BadRequestException("Invalid action: " + action);
             }
@@ -232,21 +233,25 @@ public class UserCommandServiceImpl implements UserCommandService {
                         ? "\nReason: " + request.getReason()
                         : "");
 
-        Notification notification = Notification.builder()
-                .user(user)
-                .title("Request to become a seller from " + user.getAccount().getEmail())
-                .message(message)
-                .status("pending")
-                .isRead(false)
-                .build();
-
-        notificationCommandRepository.save(notification);
+        //Send notifications to admin
+        Long adminId = accountQueryRepository.findFirstAdminId()
+                .orElseThrow(() -> new IllegalStateException("No admin account found"));
+            NotificationMessage msg = NotificationMessage.builder()
+                    .id(0L)
+                    .userId(adminId)      // ID của từng admin
+                    .title("Seller request")
+                    .message("Request to become a seller from " + user.getAccount().getEmail())
+                    .status(NotificationStatus.SUCCESS)
+                    .itemUrl("https://example.com/test/item/123")
+                    .createdAt(Instant.now())
+                    .build();
+            notificationProducer.send(msg);
 
         Notification userNotification = Notification.builder()
                 .user(user)
                 .title("Request to become a seller")
                 .message("Your request to become a seller has been successfully sent and is waiting for admin to process.")
-                .status("pending")
+                .status(NotificationStatus.SUCCESS)
                 .isRead(false)
                 .build();
 
@@ -310,43 +315,6 @@ public class UserCommandServiceImpl implements UserCommandService {
                 .build()));
 
         return successCount;
-    }
-
-    private int handleBulkSendNotification(List<Long> userIds, Map<Long, Account> accountMap,
-                                           Map<String, Object> data, List<BulkActionResponse.BulkResult> results) {
-        String title = (String) data.get("title");
-        String message = (String) data.get("message");
-        String type = (String) data.getOrDefault("type", "info");
-        Boolean sendEmail = (Boolean) data.getOrDefault("sendEmail", false);
-
-        List<Notification> notifications = new ArrayList<>();
-
-        for (Long userId : userIds) {
-            Account account = accountMap.get(userId);
-            if (account != null) {
-                Notification notification = Notification.builder()
-                        .user(account.getUser())
-                        .title(title)
-                        .message(message)
-                        .status(type)
-                        .isRead(false)
-                        .build();
-                notifications.add(notification);
-
-                if (sendEmail) {
-                    log.info("Email notification sent to: {}", account.getEmail());
-                }
-            }
-        }
-
-        notificationCommandRepository.saveAll(notifications);
-
-        userIds.forEach(userId -> results.add(BulkActionResponse.BulkResult.builder()
-                .userId(userId.toString())
-                .success(true)
-                .build()));
-
-        return notifications.size();
     }
 
     // Helper methods

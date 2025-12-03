@@ -103,13 +103,13 @@ public interface WarehouseQueryRepository extends JpaRepository<Warehouse, Long>
             "ORDER BY w.city ASC")
     List<String> findDistinctCities();
 
-    /**
-     * Tìm warehouses theo city
-     * Chỉ lấy các warehouse chưa bị xóa
-     */
     @Query("SELECT w FROM Warehouse w " +
             "WHERE w.city = :city " +
             "AND w.deletedAt IS NULL " +
             "ORDER BY w.createdAt DESC")
     List<Warehouse> findByCity(@Param("city") String city);
+
+    @Query("SELECT COUNT(w) FROM Warehouse w " +
+            "WHERE w.status = com.example.demo.commons.enums.WarehouseStatus.APPROVE")
+    Long countActiveWarehouses();
 }

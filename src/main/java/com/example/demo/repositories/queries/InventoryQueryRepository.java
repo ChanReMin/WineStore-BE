@@ -192,4 +192,22 @@ public interface InventoryQueryRepository extends JpaRepository<Inventory, Long>
             "AND (i.quantityOnHand IS NULL OR i.quantityOnHand = 0) " +
             "AND i.deletedAt IS NULL")
     Integer countOutOfStockProducts(@Param("warehouseId") Long warehouseId);
+
+    @Query("SELECT COALESCE(SUM(i.quantityOnHand * p.costPrice), 0) " +
+            "FROM Inventory i " +
+            "JOIN i.product p " +
+            "WHERE i.quantityOnHand > 0")
+    BigDecimal calculateTotalInventoryValue();
+
+    @Query("SELECT COALESCE(SUM(i.quantityOnHand), 0) FROM Inventory i")
+    Integer calculateTotalQuantity();
+
+    @Query("SELECT COUNT(DISTINCT i.product.id) FROM Inventory i " +
+            "WHERE i.quantityOnHand > 0 " +
+            "AND i.quantityOnHand <= i.safetyStock")
+    Long countLowStockProducts();
+
+    @Query("SELECT COUNT(DISTINCT i.product.id) FROM Inventory i " +
+            "WHERE i.quantityOnHand IS NULL OR i.quantityOnHand <= 0")
+    Long countOutOfStockProducts();
 }

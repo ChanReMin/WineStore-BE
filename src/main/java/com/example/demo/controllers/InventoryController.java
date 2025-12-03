@@ -10,6 +10,7 @@ import com.example.demo.services.commands.InventoryCommandService;
 import com.example.demo.services.commands.InventoryLogCommandService;
 import com.example.demo.services.queries.InventoryLogQueryService;
 import com.example.demo.services.queries.InventoryQueryService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -181,6 +182,20 @@ public class InventoryController {
         return ResponseEntity.ok(SuccessResponse.<Void>builder()
                 .success(true)
                 .message("Inventory log deleted successfully")
+                .build());
+    }
+
+    @PreAuthorize("hasAnyRole('SELLER','ADMIN')")
+    @GetMapping("/logs/{logId}")
+    @Operation(summary = "Get inventory log detail by ID")
+    public ResponseEntity<SuccessResponse<InventoryLogDetailResponse>> getInventoryLogDetail(
+            @PathVariable Long logId) {
+
+        InventoryLogDetailResponse data = inventoryLogQueryService.getInventoryLogDetailById(logId);
+
+        return ResponseEntity.ok(SuccessResponse.<InventoryLogDetailResponse>builder()
+                .success(true)
+                .data(data)
                 .build());
     }
 }

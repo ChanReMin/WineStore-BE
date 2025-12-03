@@ -129,27 +129,11 @@
             <optional>true</optional>
         </dependency>
 
-<!--         https://mvnrepository.com/artifact/org.flywaydb/flyway-core -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
             <version>11.17.0</version>
         </dependency>
-
-        <!--        &lt;!&ndash; ===================================== &ndash;&gt;-->
-        <!--        &lt;!&ndash; RabbitMQ for Message Queue (CQRS)     &ndash;&gt;-->
-        <!--        &lt;!&ndash; ===================================== &ndash;&gt;-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.springframework.boot</groupId>-->
-        <!--            <artifactId>spring-boot-starter-amqp</artifactId>-->
-        <!--        </dependency>-->
-
-        <!--        &lt;!&ndash; RabbitMQ Test &ndash;&gt;-->
-        <!--        <dependency>-->
-        <!--            <groupId>org.springframework.amqp</groupId>-->
-        <!--            <artifactId>spring-rabbit-test</artifactId>-->
-        <!--            <scope>test</scope>-->
-        <!--        </dependency>-->
 
         <!-- https://mvnrepository.com/artifact/org.flywaydb/flyway-database-postgresql -->
         <dependency>
@@ -169,6 +153,45 @@
             <groupId>com.github.javafaker</groupId>
             <artifactId>javafaker</artifactId>
             <version>1.0.2</version>
+        </dependency>
+
+        <!-- MapStruct -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>1.5.5.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>1.5.5.Final</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- AWS SQS (v2 SDK) -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sqs</artifactId>
+            <version>2.39.3</version>
+        </dependency>
+
+        <!-- WebSocket -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
+        <!-- Caffeine Cache -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.1.8</version>
+        </dependency>
+
+        <!-- Spring Cache -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
         </dependency>
     </dependencies>
 
