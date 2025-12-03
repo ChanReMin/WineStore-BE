@@ -39,17 +39,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        String jwt = null;
+        String userEmail = null;
+
+        final String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            jwt = authHeader.substring(7);
+        }
+
+        if (jwt == null) {
+            String requestURI = request.getRequestURI();
+            if (requestURI != null && requestURI.startsWith("/ws")) {
+                String tokenParam = request.getParameter("token");
+                if (tokenParam != null && !tokenParam.isEmpty()) {
+                    jwt = tokenParam.startsWith("Bearer ") ? tokenParam.substring(7) : tokenParam;
+                }
+            }
+        }
+
+        if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt);
+        try {
+            userEmail = jwtService.extractUsername(jwt);
+        } catch (Exception e) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);

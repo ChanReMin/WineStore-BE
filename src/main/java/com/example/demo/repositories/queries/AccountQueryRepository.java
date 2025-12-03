@@ -109,6 +109,9 @@ public interface AccountQueryRepository extends JpaRepository<Account, Long>, Jp
     @Query("SELECT COUNT(a) FROM Account a WHERE a.role = :role")
     Long countByRoleDashboard(@Param("role") AccountRole role);
 
+
+    @Query("SELECT a.id FROM Account a WHERE a.role = com.example.demo.commons.enums.AccountRole.ADMIN")
+    Optional<Long> findFirstAdminId();
     @Query("SELECT COUNT(a) FROM Account a " +
             "WHERE a.role = com.example.demo.commons.enums.AccountRole.SELLER " +
             "AND a.status = com.example.demo.commons.enums.AccountStatus.ACTIVE")
