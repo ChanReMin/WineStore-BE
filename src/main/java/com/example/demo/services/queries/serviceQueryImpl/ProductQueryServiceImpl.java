@@ -281,7 +281,7 @@ public class ProductQueryServiceImpl implements ProductQueryService {
     private ProductListResponse.ProductSummary buildProductSummary() {
         boolean isSeller = hasRole("SELLER") && !hasRole("ADMIN");
 
-        Long total, pending, active, banned;
+        Long total, pending, active, reject;
 
         if (isSeller) {
             String currentUserEmail = securityUtils.getCurrentUserEmail();
@@ -291,19 +291,19 @@ public class ProductQueryServiceImpl implements ProductQueryService {
             total = productQueryRepository.countByCreatedBy(currentUser);
             pending = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.PENDING);
             active = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.ACTIVE);
-            banned = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.REJECT);
+            reject = productQueryRepository.countByCreatedByAndStatus(currentUser, ProductStatus.REJECT);
         } else {
             total = productQueryRepository.countAllActive();
             pending = productQueryRepository.countByStatus(ProductStatus.PENDING);
             active = productQueryRepository.countByStatus(ProductStatus.ACTIVE);
-            banned = productQueryRepository.countByStatus(ProductStatus.REJECT);
+            reject = productQueryRepository.countByStatus(ProductStatus.REJECT);
         }
 
         return ProductListResponse.ProductSummary.builder()
                 .total(total)
                 .pending(pending)
                 .active(active)
-                .banned(banned)
+                .reject(reject)
                 .build();
     }
 }

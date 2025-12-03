@@ -7,17 +7,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface OrderQueryRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
+public interface OrderQueryRepository extends JpaRepository<Order, Long> {
+
     /**
      * Đếm tổng số đơn hàng từ một warehouse
      * Logic: Đếm các order có orderItems chứa products từ warehouse này
@@ -65,6 +66,53 @@ public interface OrderQueryRepository extends JpaRepository<Order, Long>, JpaSpe
             @Param("fromDate") LocalDateTime fromDate
     );
 
+    @Query("SELECT COALESCE(SUM(o.finalAmount), 0) FROM Order o " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+            "AND o.status NOT IN (com.example.demo.commons.enums.OrderStatus.CANCELLED)")
+    BigDecimal calculateTotalRevenue(@Param("startDate") LocalDateTime startDate,
+                                     @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT COUNT(o) FROM Order o " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate")
+    Long countOrdersByDateRange(@Param("startDate") LocalDateTime startDate,
+                                @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT COUNT(o) FROM Order o " +
+            "WHERE o.status = :status " +
+            "AND o.createdAt BETWEEN :startDate AND :endDate")
+    Long countByStatusAndDateRange(@Param("status") OrderStatus status,
+                                   @Param("startDate") LocalDateTime startDate,
+                                   @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT COUNT(DISTINCT o.user.id) FROM Order o " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate")
+    Long countUniqueCustomers(@Param("startDate") LocalDateTime startDate,
+                              @Param("endDate") LocalDateTime endDate);
+
+    // Category Performance
+    @Query("SELECT c.id, c.name, COALESCE(SUM(o.finalAmount), 0), COUNT(o) " +
+            "FROM Order o " +
+            "JOIN o.orderItems oi " +
+            "JOIN oi.product p " +
+            "JOIN p.category c " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+            "AND o.status NOT IN (com.example.demo.commons.enums.OrderStatus.CANCELLED) " +
+            "GROUP BY c.id, c.name " +
+            "ORDER BY SUM(o.finalAmount) DESC")
+    List<Object[]> calculateCategoryPerformance(@Param("startDate") LocalDateTime startDate,
+                                                @Param("endDate") LocalDateTime endDate);
+
+    // Region Performance
+    @Query("SELECT ua.city, COALESCE(SUM(o.finalAmount), 0), COUNT(o) " +
+            "FROM Order o " +
+            "JOIN o.shippingAddress ua " +
+            "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
+            "AND o.status NOT IN (com.example.demo.commons.enums.OrderStatus.CANCELLED) " +
+            "GROUP BY ua.city " +
+            "ORDER BY SUM(o.finalAmount) DESC")
+    List<Object[]> calculateRegionPerformance(@Param("startDate") LocalDateTime startDate,
+                                              @Param("endDate") LocalDateTime endDate);
+
     @Query("SELECT o FROM Order o " +
             "LEFT JOIN FETCH o.orderItems oi " +
             "LEFT JOIN FETCH oi.product " + // Fetch product for each order item
@@ -76,5 +124,4 @@ public interface OrderQueryRepository extends JpaRepository<Order, Long>, JpaSpe
 
     @EntityGraph(attributePaths = {"orderItems", "shippingAddress"})
     Page<Order> findAll(Specification<Order> spec, Pageable pageable);
-
 }

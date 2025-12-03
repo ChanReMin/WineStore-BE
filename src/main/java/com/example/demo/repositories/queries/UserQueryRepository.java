@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -68,4 +70,50 @@ public interface UserQueryRepository extends JpaRepository<User, Long> {
             "WHERE ua.id = :addressId " +
             "AND ua.deletedAt IS NULL")
     Optional<UserAddress> findAddressById(@Param("addressId") Long addressId);
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.createdAt BETWEEN :start AND :end")
+    Long countByCreatedAtBetween(@Param("start") LocalDateTime start,
+                                 @Param("end") LocalDateTime end);
+
+    @Query("SELECT COUNT(DISTINCT u.id) " +
+            "FROM User u JOIN Order o ON o.user.id = u.id " +
+            "WHERE o.createdAt BETWEEN :start AND :end")
+    Long countActiveUsers(@Param("start") LocalDateTime start,
+                          @Param("end") LocalDateTime end);
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.createdAt <= :end")
+    Long countByCreatedAtBefore(@Param("end") LocalDateTime end);
+
+    @Query("""
+    SELECT COUNT(u.id) AS countUsers,
+           COALESCE(SUM(o.totalAmount), CAST(0 AS bigdecimal)) AS totalSpent,
+           COALESCE(SUM(o.totalAmount), CAST(0 AS bigdecimal)) AS avgOrderValue
+    FROM User u
+    JOIN Order o ON o.user.id = u.id
+    GROUP BY u.id
+    HAVING SUM(o.totalAmount) > :minSpent
+""")
+    List<Object[]> getUserSegmentStats(@Param("minSpent") BigDecimal minSpent);
+
+    @Query("""
+    SELECT COUNT(u.id) AS countUsers,
+           COALESCE(SUM(o.totalAmount), CAST(0 AS bigdecimal)) AS totalSpent,
+           COALESCE(SUM(o.totalAmount), CAST(0 AS bigdecimal)) AS avgOrderValue
+    FROM User u
+    JOIN Order o ON o.user.id = u.id
+    GROUP BY u.id
+    HAVING COUNT(o.id) > :minOrders
+""")
+    List<Object[]> getRegularUserStats(@Param("minOrders") Integer minOrders);
+
+    @Query("""
+    SELECT COUNT(u.id) AS countUsers,
+           COALESCE(SUM(o.totalAmount), CAST(0 AS bigdecimal)) AS totalSpent,
+           COALESCE(SUM(o.totalAmount), CAST(0 AS bigdecimal)) AS avgOrderValue
+    FROM User u
+    LEFT JOIN Order o ON o.user.id = u.id
+    GROUP BY u.id
+    HAVING COUNT(o.id) < :maxOrders
+""")
+    List<Object[]> getNewUserStats(@Param("maxOrders") Integer maxOrders);
 }

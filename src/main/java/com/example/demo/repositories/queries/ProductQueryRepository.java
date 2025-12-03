@@ -174,7 +174,7 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
     Long countByCreatedByAndStatus(@Param("createdBy") Account createdBy, @Param("status") ProductStatus status);
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.status = :status AND p.deletedAt IS NULL")
-    Long countByStatus(@Param("status") ProductStatus status);
+    Long countByStatusCode(@Param("status") Integer status);
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.deletedAt IS NULL")
     Long countAllActive();
@@ -182,4 +182,11 @@ public interface ProductQueryRepository extends JpaRepository<Product, Long> {
     // Custom method to find products by category IDs
     @Query("SELECT p FROM Product p LEFT JOIN FETCH p.inventories WHERE p.id = :productId AND p.deletedAt IS NULL")
     Optional<Product> findByIdWithInventories(@Param("productId") Long productId);
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.status = :status AND p.deletedAt IS NULL")
+    Long countByStatus(@Param("status") ProductStatus status);
+
+    @Query("SELECT COUNT(p) FROM Product p " +
+            "WHERE NOT EXISTS (SELECT 1 FROM Inventory i WHERE i.product = p AND i.quantityOnHand > 0)")
+    Long countOutOfStock();
 }

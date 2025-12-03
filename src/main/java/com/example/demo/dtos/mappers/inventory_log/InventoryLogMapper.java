@@ -3,6 +3,7 @@ package com.example.demo.dtos.mappers.inventory_log;
 import com.example.demo.commons.enums.InventoryLogType;
 
 import com.example.demo.dtos.commands.inventory.CreateInventoryLogRequest;
+import com.example.demo.dtos.responses.inventory.InventoryLogDetailResponse;
 import com.example.demo.dtos.responses.inventory.InventoryLogResponse;
 import com.example.demo.entities.InventoryLog;
 import lombok.RequiredArgsConstructor;
@@ -67,11 +68,87 @@ public class InventoryLogMapper {
                 .quantityChange(quantityChange != null ? quantityChange : calculatedChange)
                 .quantityAfter(quantityAfter)
                 .note(log.getNote())
-                .referenceCode(generateReferenceCode(log))
                 .createdBy(log.getUser() != null
                         ? log.getUser().getFirstName() + " " + log.getUser().getLastName()
                         : "System")
                 .createdAt(log.getCreatedAt())
+                .build();
+    }
+
+    public InventoryLogDetailResponse toDetailResponse(
+            InventoryLog log,
+            Integer quantityBefore,
+            Integer quantityAfter) {
+
+        // Calculate quantity change
+        Integer change = calculateQuantityChange(log.getType(), log.getQuantity());
+
+        // Build warehouse info with manager
+        InventoryLogDetailResponse.WarehouseInfo.ManagerInfo manager = null;
+        if (log.getWarehouse().getCreatedBy() != null &&
+                log.getWarehouse().getCreatedBy().getUser() != null) {
+            manager = InventoryLogDetailResponse.WarehouseInfo.ManagerInfo.builder()
+                    .name(log.getWarehouse().getCreatedBy().getUser().getFirstName() + " " +
+                            log.getWarehouse().getCreatedBy().getUser().getLastName())
+                    .phone(log.getWarehouse().getCreatedBy().getUser().getPhoneNumber())
+                    .build();
+        }
+
+        InventoryLogDetailResponse.WarehouseInfo warehouse =
+                InventoryLogDetailResponse.WarehouseInfo.builder()
+                        .id(log.getWarehouse().getId())
+                        .name(log.getWarehouse().getName())
+                        .location(log.getWarehouse().getLocation())
+                        .city(log.getWarehouse().getCity())
+                        .manager(manager)
+                        .build();
+
+        // Build product info
+        InventoryLogDetailResponse.ProductInfo product =
+                InventoryLogDetailResponse.ProductInfo.builder()
+                        .id(log.getProduct().getId())
+                        .name(log.getProduct().getName())
+                        .sku(log.getProduct().getSku())
+                        .price(log.getProduct().getPrice())
+                        .costPrice(log.getProduct().getCostPrice())
+                        .image(log.getProduct().getImages())
+                        .build();
+
+        // Build quantity change info
+        InventoryLogDetailResponse.QuantityChange quantityChange =
+                InventoryLogDetailResponse.QuantityChange.builder()
+                        .before(quantityBefore)
+                        .change(change)
+                        .after(quantityAfter)
+                        .build();
+
+        // Build user info
+        InventoryLogDetailResponse.UserInfo user = null;
+        if (log.getUser() != null) {
+            user = InventoryLogDetailResponse.UserInfo.builder()
+                    .id(log.getUser().getId())
+                    .name(log.getUser().getFirstName() + " " + log.getUser().getLastName())
+                    .email(log.getUser().getAccount() != null
+                            ? log.getUser().getAccount().getEmail()
+                            : null)
+                    .role(log.getUser().getAccount() != null &&
+                            log.getUser().getAccount().getRole() != null
+                            ? log.getUser().getAccount().getRole().name()
+                            : "UNKNOWN")
+                    .build();
+        }
+
+        return InventoryLogDetailResponse.builder()
+                .id(log.getId())
+                .type(log.getType().getDescription())
+                .typeText(log.getType().getDescription())
+                .quantity(log.getQuantity())
+                .createdAt(log.getCreatedAt())
+                .warehouse(warehouse)
+                .product(product)
+                .quantityChange(quantityChange)
+                .user(user)
+                .note(log.getNote())
                 .build();
     }
 
@@ -94,12 +171,5 @@ public class InventoryLogMapper {
             default:
                 return 0;
         }
-    }
-
-    /**
-     * Generate reference code based on log type and shipment ID
-     */
-    private String generateReferenceCode(InventoryLog log) {
-        return null;
     }
 }
