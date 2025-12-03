@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -130,8 +131,8 @@ public class PromotionCommandServiceImpl {
                 .description(request.getDescription())
                 .discountType(request.getDiscount_type())
                 .discountValue(request.getDiscount_value())
-                .startDate(request.getStart_date())
-                .endDate(request.getEnd_date())
+                .startDate(request.getStart_date().atStartOfDay())
+                .endDate(request.getEnd_date().atTime(23, 59, 59))
                 .maxUsage(request.getMax_usage())
                 .status(request.getStatus() != null ? request.getStatus() : 1) // Default to Active
                 .createdBy(createdByAccount)
@@ -177,7 +178,7 @@ public class PromotionCommandServiceImpl {
         }
 
         // 4. Check Status for Editing (Cannot edit ended promotion)
-        if (promotion.getEndDate().isBefore(LocalDateTime.now())) {
+        if (promotion.getEndDate().toLocalDate().isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Cannot edit ended promotion.");
         }
 
@@ -213,14 +214,14 @@ public class PromotionCommandServiceImpl {
             promotion.setDiscountValue(effectiveDiscountValue);
         }
         if (request.getStart_date() != null) {
-            promotion.setStartDate(request.getStart_date());
+            promotion.setStartDate(request.getStart_date().atStartOfDay());
         }
         if (request.getEnd_date() != null) {
-            promotion.setEndDate(request.getEnd_date());
+            promotion.setEndDate(request.getEnd_date().atTime(23, 59, 59));
         }
         if (request.getStart_date() != null || request.getEnd_date() != null) {
-            LocalDateTime effectiveStartDate = request.getStart_date() != null ? request.getStart_date() : promotion.getStartDate();
-            LocalDateTime effectiveEndDate = request.getEnd_date() != null ? request.getEnd_date() : promotion.getEndDate();
+            LocalDateTime effectiveStartDate = request.getStart_date() != null ? request.getStart_date().atStartOfDay() : promotion.getStartDate();
+            LocalDateTime effectiveEndDate = request.getEnd_date() != null ? request.getEnd_date().atTime(23, 59, 59) : promotion.getEndDate();
             if (effectiveStartDate.isAfter(effectiveEndDate)) {
                 throw new IllegalArgumentException("End date must be after start date");
             }

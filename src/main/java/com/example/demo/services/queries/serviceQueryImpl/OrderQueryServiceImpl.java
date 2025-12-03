@@ -96,6 +96,7 @@ public class OrderQueryServiceImpl implements OrderQueryService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public OrderDetailResponse getOrderDetailForCustomer(Long userId, Long orderId) {
         Order order = orderQueryRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found or does not belong to user"));
@@ -105,6 +106,7 @@ public class OrderQueryServiceImpl implements OrderQueryService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public SellerOrderListResponse getOrdersForSeller(OrderQueryRequest request) {
         Pageable pageable = PageRequest.of(request.getPage() - 1, request.getLimit());
 
@@ -208,6 +210,7 @@ public class OrderQueryServiceImpl implements OrderQueryService {
 
 
     @Override
+    @Transactional(readOnly = true)
     public SellerOrderDetailResponse getOrderDetailForSeller(Long orderId) {
         Order order = orderQueryRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));

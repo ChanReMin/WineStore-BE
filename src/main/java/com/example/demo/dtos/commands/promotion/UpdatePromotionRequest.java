@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -35,10 +35,10 @@ public class UpdatePromotionRequest {
     private BigDecimal discount_value;
 
     @FutureOrPresent(message = "Start date must be current or in the future")
-    private LocalDateTime start_date;
+    private LocalDate start_date;
 
     @Future(message = "End date must be in the future")
-    private LocalDateTime end_date;
+    private LocalDate end_date;
 
     @Min(value = 1, message = "Max usage must be at least 1")
     private Integer max_usage;
