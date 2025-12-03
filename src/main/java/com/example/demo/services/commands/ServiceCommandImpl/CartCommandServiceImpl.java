@@ -1,4 +1,4 @@
-package com.example.demo.services.commands;
+package com.example.demo.services.commands.ServiceCommandImpl;
 
 import com.example.demo.commons.enums.ProductStatus;
 import com.example.demo.dtos.commands.cart.AddItemToCartRequest;
@@ -25,14 +25,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class CartCommandService {
+public class CartCommandServiceImpl {
 
     private final CartCommandRepository cartCommandRepository;
     private final CartItemCommandRepository cartItemCommandRepository;
