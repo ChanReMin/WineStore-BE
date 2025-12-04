@@ -47,8 +47,9 @@ public class Promotion extends BaseEntity {
     @Column(name = "max_usage")
     private Integer maxUsage;
 
-    @Column(name = "used_count")
-    private Integer usedCount;
+    @Column(name = "used_count", nullable = false, columnDefinition = "INT DEFAULT 0")
+    @Builder.Default
+    private Integer usedCount = 0;
 
     @Column(columnDefinition = "SMALLINT")
     private Integer status; // 1=active, 0=inactive
@@ -76,7 +77,8 @@ public class Promotion extends BaseEntity {
     }
 
     public boolean canBeUsed() {
-        return isActive() && (maxUsage == null || usedCount < maxUsage);
+        int currentUsedCount = usedCount != null ? usedCount : 0;
+        return isActive() && (maxUsage == null || currentUsedCount < maxUsage);
     }
 
     public BigDecimal calculateDiscount(BigDecimal amount) {
