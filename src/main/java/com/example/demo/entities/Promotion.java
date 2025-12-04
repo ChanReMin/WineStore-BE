@@ -47,7 +47,7 @@ public class Promotion extends BaseEntity {
     @Column(name = "max_usage")
     private Integer maxUsage;
 
-    @Column(name = "used_count", nullable = false, columnDefinition = "INT DEFAULT 0")
+    @Column(name = "used_count", nullable = false)
     @Builder.Default
     private Integer usedCount = 0;
 

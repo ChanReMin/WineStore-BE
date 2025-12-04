@@ -119,8 +119,7 @@ public class GlobalExceptionHandler {
         // Trả message chung chung, không để message hệ thống lộ ra ngoài
         ErrorResponse error = ErrorResponse.builder()
                 .success(false)
-//                .message("Internal server error")
-                .message(ex.getMessage())
+                .message("Internal server error")
                 .errors(Collections.emptyList())
                 .build();
 
