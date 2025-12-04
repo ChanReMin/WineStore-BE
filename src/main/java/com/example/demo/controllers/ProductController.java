@@ -79,6 +79,7 @@ public class ProductController {
         }
 
         @GetMapping("/{id}")
+        @Operation(summary = "Get detail products for public access")
         public ResponseEntity<SuccessResponse<Object>> getProductById(@PathVariable Long id) {
                 Object data = productQueryService.getProductById(id);
 
@@ -87,6 +88,17 @@ public class ProductController {
                         .data(data)
                         .build());
         }
+
+        @GetMapping("/{id}/public")
+        public ResponseEntity<SuccessResponse<ProductCustomerDetailResponse>> getProductByIdPublic(@PathVariable Long id) {
+                ProductCustomerDetailResponse data = productQueryService.getProductByIdPublic(id);
+
+                return ResponseEntity.ok(SuccessResponse.<ProductCustomerDetailResponse>builder()
+                        .success(true)
+                        .data(data)
+                        .build());
+        }
+
         @GetMapping("/{id}/related")
         public ResponseEntity<SuccessResponse<Object>> getRelatedProducts(@PathVariable Long id) {
                 Object data = productQueryService.getRelatedProducts(id);

@@ -326,6 +326,17 @@ public class ProductQueryServiceImpl implements ProductQueryService {
                 : productMapper.toCustomerDetailResponse(product);
     }
 
+    @Override
+    @Transactional(transactionManager = "readTransactionManager", readOnly = true)
+    public ProductCustomerDetailResponse getProductByIdPublic(Long productId) {
+        log.info("🔍 Fetching product with id: {}", productId);
+        Product product = productQueryRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+        return productMapper.toCustomerDetailResponse(product);
+    }
+
+
     /**
      * Get related products (similar products)
      */
