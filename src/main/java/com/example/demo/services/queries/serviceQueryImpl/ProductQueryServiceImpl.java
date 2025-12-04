@@ -186,6 +186,116 @@ public class ProductQueryServiceImpl implements ProductQueryService {
                 .build();
     }
 
+
+    @Override
+    @Transactional(transactionManager = "readTransactionManager", readOnly = true)
+    public ProductListResponse getAllProductsPublic(
+            Integer page,
+            Integer limit,
+            String search,
+            Integer status,
+            Long categoryId,
+            Long brandId,
+            Long warehouseId,
+            BigDecimal priceFrom,
+            BigDecimal priceTo,
+            BigDecimal concentrationFrom,
+            BigDecimal concentrationTo) {
+
+        log.info("📋 Fetching products - page: {}, limit: {}, search: {}, status: {}",
+                page, limit, search, status);
+
+        // Validate page & limit
+        if (page != null && page < 0) {
+            throw new IllegalArgumentException("Page number must be greater than 0");
+        }
+        if (limit != null && limit < 0) {
+            throw new IllegalArgumentException("Limit must be greater than 0");
+        }
+
+        // Default values
+        page = (page != null && page > 0) ? page : 1;
+        limit = (limit != null && limit > 0) ? Math.min(limit, 100) : 10;
+
+        Pageable pageable = PageRequest.of(page - 1, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // Validate filters
+        if (status != null && (status < 0 || status > 2)) {
+            throw new IllegalArgumentException("Invalid status value");
+        }
+        if (concentrationFrom != null && concentrationFrom.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("concentrationFrom cannot be negative");
+        }
+        if (concentrationTo != null && concentrationTo.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("concentrationTo cannot be negative");
+        }
+        if (priceFrom != null && priceFrom.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("priceFrom cannot be negative");
+        }
+        if (priceTo != null && priceTo.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("priceTo cannot be negative");
+        }
+        if (concentrationFrom != null && concentrationTo != null && concentrationFrom.compareTo(concentrationTo) > 0) {
+            throw new IllegalArgumentException("concentrationFrom cannot be greater than concentrationTo");
+        }
+        if (priceFrom != null && priceTo != null && priceFrom.compareTo(priceTo) > 0) {
+            throw new IllegalArgumentException("priceFrom cannot be greater than priceTo");
+        }
+        if (categoryId != null && categoryId <= 0) {
+            throw new IllegalArgumentException("categoryId must be positive");
+        }
+        if (brandId != null && brandId <= 0) {
+            throw new IllegalArgumentException("brandId must be positive");
+        }
+        if (warehouseId != null && warehouseId <= 0) {
+            throw new IllegalArgumentException("warehouseId must be positive");
+        }
+
+        // Check existence
+        if (brandId != null) {
+            brandQueryRepository.findById(brandId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Brand not found"));
+        }
+        if (categoryId != null) {
+            categoryQueryRepository.findById(categoryId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+        }
+        if (warehouseId != null) {
+            warehouseQueryRepository.findById(warehouseId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Warehouse not found"));
+        }
+
+        // Filter query
+        Page<Product> productPage = productQueryRepository.findAllActiveProductsWithFilters(
+                search,
+                categoryId,
+                brandId,
+                warehouseId,
+                priceFrom,
+                priceTo,
+                concentrationFrom,
+                concentrationTo,
+                pageable
+        );
+        List<Object> products = productPage.getContent().stream()
+                .map(productMapper::toCustomerResponse)
+                .collect(Collectors.toList());
+
+        ProductListResponse.PaginationInfo pagination = ProductListResponse.PaginationInfo.builder()
+                .currentPage(page)
+                .totalPages(productPage.getTotalPages())
+                .totalItems(productPage.getTotalElements())
+                .perPage(limit)
+                .build();
+
+        return ProductListResponse.builder()
+                .pagination(pagination)
+                .products(products)
+                .build();
+    }
+
+
+
     @Override
     @Transactional(transactionManager = "readTransactionManager", readOnly = true)
     public Object getProductById(Long productId) {

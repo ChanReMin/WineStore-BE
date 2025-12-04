@@ -6,6 +6,7 @@ import com.example.demo.dtos.responses.product.*;
 import com.example.demo.services.commands.ProductCommandService;
 import com.example.demo.services.commands.ProductPromotionCommandService;
 import com.example.demo.services.queries.ProductQueryService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,31 @@ public class ProductController {
                 @RequestParam(required = false) BigDecimal concentrationTo) {
 
                 ProductListResponse response = productQueryService.getAllProducts(
+                        page, limit, search, status, categoryId, brandId,warehouseId,
+                        priceFrom, priceTo, concentrationFrom, concentrationTo);
+
+                return ResponseEntity.ok(SuccessResponse.<ProductListResponse>builder()
+                        .success(true)
+                        .data(response)
+                        .build());
+        }
+
+        @GetMapping("/public")
+        @Operation(summary = "Get all products for public access")
+        public ResponseEntity<SuccessResponse<ProductListResponse>> getAllProductsPublic(
+                @RequestParam(required = false, defaultValue = "1") Integer page,
+                @RequestParam(required = false, defaultValue = "10") Integer limit,
+                @RequestParam(required = false) String search,
+                @RequestParam(required = false) Integer status,
+                @RequestParam(required = false) Long categoryId,
+                @RequestParam(required = false) Long warehouseId,
+                @RequestParam(required = false) Long brandId,
+                @RequestParam(required = false) BigDecimal priceFrom,
+                @RequestParam(required = false) BigDecimal priceTo,
+                @RequestParam(required = false) BigDecimal concentrationFrom,
+                @RequestParam(required = false) BigDecimal concentrationTo) {
+
+                ProductListResponse response = productQueryService.getAllProductsPublic(
                         page, limit, search, status, categoryId, brandId,warehouseId,
                         priceFrom, priceTo, concentrationFrom, concentrationTo);
 

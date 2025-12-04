@@ -21,6 +21,19 @@ public interface ProductQueryService {
             BigDecimal concentrationFrom,
             BigDecimal concentrationTo);
 
+    ProductListResponse getAllProductsPublic(
+            Integer page,
+            Integer limit,
+            String search,
+            Integer status,
+            Long categoryId,
+            Long brandId,
+            Long warehouseId,
+            BigDecimal priceFrom,
+            BigDecimal priceTo,
+            BigDecimal concentrationFrom,
+            BigDecimal concentrationTo);
+
     Object getProductById(Long productId);
 
     Object getRelatedProducts(Long productId);
