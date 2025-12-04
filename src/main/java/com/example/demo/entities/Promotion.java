@@ -83,9 +83,19 @@ public class Promotion extends BaseEntity {
         if (!canBeUsed()) return BigDecimal.ZERO;
 
         if (discountType == DiscountType.PERCENTAGE) {
-            return amount.multiply(discountValue).divide(BigDecimal.valueOf(100));
+            return amount.multiply(discountValue)
+                    .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
         } else {
-            return discountValue;
+            return discountValue.compareTo(amount) > 0 ? amount : discountValue;
         }
+    }
+
+    public BigDecimal calculateFinalPrice(BigDecimal amount) {
+        if (!canBeUsed()) return amount;
+
+        BigDecimal discount = calculateDiscount(amount);
+        BigDecimal finalPrice = amount.subtract(discount);
+
+        return finalPrice.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : finalPrice;
     }
 }
