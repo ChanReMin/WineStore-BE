@@ -3,6 +3,7 @@ package com.example.demo.dtos.mappers.product;
 import com.example.demo.dtos.commands.product.WriteProductRequest;
 import com.example.demo.dtos.responses.product.*;
 import com.example.demo.entities.Product;
+import com.example.demo.entities.Promotion;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -326,11 +328,14 @@ public class ProductMapper {
         return product.getPromotionProducts().stream()
                 .filter(pp -> pp.getPromotion() != null && pp.getPromotion().getDeletedAt() == null)
                 .map(pp -> {
-                    var promotion = pp.getPromotion();
+                    Promotion promotion = pp.getPromotion();
+                    BigDecimal calculatedDiscount = promotion.calculateDiscount(product.getPrice());
+
                     return PromotionInfo.builder()
                             .id(promotion.getId())
                             .code(promotion.getCode())
                             .name(promotion.getName())
+                            .discountValue(calculatedDiscount)
                             .discountType(promotion.getDiscountType().name())
                             .build();
                 })

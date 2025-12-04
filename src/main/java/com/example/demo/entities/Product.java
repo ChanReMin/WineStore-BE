@@ -213,4 +213,56 @@ public class Product extends BaseEntity {
                 .mapToInt(inv -> inv.getQuantityOnHand() != null ? inv.getQuantityOnHand() : 0)
                 .sum();
     }
+
+    /**
+     * Get the best active promotion (highest discount)
+     */
+    public Promotion getBestPromotion() {
+        if (promotionProducts == null || promotionProducts.isEmpty()) {
+            return null;
+        }
+
+        Promotion bestPromotion = null;
+        BigDecimal maxDiscount = BigDecimal.ZERO;
+
+        for (PromotionProduct pp : promotionProducts) {
+            Promotion promotion = pp.getPromotion();
+            if (promotion != null && promotion.canBeUsed() && promotion.getDeletedAt() == null) {
+                BigDecimal discount = promotion.calculateDiscount(this.price);
+                if (discount.compareTo(maxDiscount) > 0) {
+                    maxDiscount = discount;
+                    bestPromotion = promotion;
+                }
+            }
+        }
+
+        return bestPromotion;
+    }
+
+    /**
+     * Calculate final price after applying best promotion
+     */
+    public BigDecimal getFinalPrice() {
+        Promotion bestPromotion = getBestPromotion();
+        if (bestPromotion == null) {
+            return this.price;
+        }
+
+        BigDecimal discount = bestPromotion.calculateDiscount(this.price);
+        BigDecimal finalPrice = this.price.subtract(discount);
+
+        return finalPrice.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : finalPrice;
+    }
+
+    /**
+     * Calculate discount amount from best promotion
+     */
+    public BigDecimal getDiscountAmount() {
+        Promotion bestPromotion = getBestPromotion();
+        if (bestPromotion == null) {
+            return BigDecimal.ZERO;
+        }
+
+        return bestPromotion.calculateDiscount(this.price);
+    }
 }
