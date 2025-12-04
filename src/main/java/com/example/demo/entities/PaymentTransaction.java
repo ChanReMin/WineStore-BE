@@ -38,6 +38,6 @@ public class PaymentTransaction extends BaseEntity {
     @Column(name = "provider_txn_code", length = 200)
     private String providerTxnCode; // Mã giao dịch từ payment provider
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "responsedata" , columnDefinition = "TEXT")
     private String responseData; // JSON response từ provider
 }

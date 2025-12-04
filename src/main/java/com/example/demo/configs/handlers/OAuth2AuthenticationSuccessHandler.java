@@ -34,10 +34,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final JwtService jwtService;
     private final AppProperties appProperties;
-    private final AccountQueryRepository accountQueryRepository;
     private final AccountCommandRepository accountCommandRepository;
-    private final UserCommandRepository userCommandRepository;
-
+    private final AccountQueryRepository accountQueryRepository ;
+    private final UserCommandRepository userCommandRepository ;
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
