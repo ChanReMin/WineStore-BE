@@ -5,12 +5,14 @@ import com.example.demo.services.VnpayService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j; // Import Slf4j
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/payment")
 @RequiredArgsConstructor
+@Slf4j // Add Slf4j annotation
 public class PaymentController {
     private final VnpayService vnpayService;
     private final MomoService momoService;
@@ -23,6 +25,7 @@ public class PaymentController {
 
     @PostMapping("/momo-ipn")
     public ResponseEntity<Void> momoIpn(@RequestBody Map<String, Object> payload) {
+        log.info("Received Momo IPN payload: {}", payload); // Log the payload
         momoService.handleMomoIpn(payload);
         return ResponseEntity.noContent().build();
     }
