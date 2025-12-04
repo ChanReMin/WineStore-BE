@@ -73,7 +73,8 @@ public class SecurityConfig {
                                 "/api/v1/products",
                                 "/api/v1/products/**",
                                 "/api/v1/categories",
-                                "/api/v1/brands").permitAll()
+                                "/api/v1/brands",
+                                "/ws/**" ).permitAll()
                         .anyRequest().authenticated()
                 )
                     .sessionManagement(session -> session
