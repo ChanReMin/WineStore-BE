@@ -1,9 +1,11 @@
 package com.example.demo.services.commands;
 
+import com.example.demo.dtos.commands.order.ChangeOrderStatusRequest;
 import com.example.demo.dtos.commands.order.OrderCreateRequest;
+import com.example.demo.dtos.responses.order.ChangeOrderStatusResponse;
 import com.example.demo.dtos.responses.order.OrderCreateResponse;
 
 public interface OrderCommandService {
     OrderCreateResponse createOrder(OrderCreateRequest request);
-
+    ChangeOrderStatusResponse updateStatusOrder(Long orderId, ChangeOrderStatusRequest request);
 }
