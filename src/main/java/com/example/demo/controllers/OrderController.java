@@ -1,5 +1,6 @@
 package com.example.demo.controllers;
 
+import com.example.demo.dtos.commands.order.ChangeOrderStatusRequest;
 import com.example.demo.dtos.commands.order.OrderCreateRequest;
 import com.example.demo.dtos.queries.order.OrderQueryRequest;
 import com.example.demo.dtos.responses.PaginationResponse;
@@ -76,4 +77,17 @@ public class OrderController {
         return new ResponseEntity<>(new SuccessResponse<>(true, "Orders retrieved successfully", response), HttpStatus.OK);
     }
 
+    @PutMapping("/{id}/status")
+    public ResponseEntity<SuccessResponse<ChangeOrderStatusResponse>> updateProductStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody ChangeOrderStatusRequest request) {
+
+        ChangeOrderStatusResponse response = orderCommandService.updateStatusOrder(id, request);
+
+        return ResponseEntity.ok(SuccessResponse.<ChangeOrderStatusResponse>builder()
+                .success(true)
+                .message("Update orders status successfully")
+                .data(response)
+                .build());
+    }
 }
