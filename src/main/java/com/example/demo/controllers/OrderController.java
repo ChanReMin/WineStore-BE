@@ -77,12 +77,12 @@ public class OrderController {
         return new ResponseEntity<>(new SuccessResponse<>(true, "Orders retrieved successfully", response), HttpStatus.OK);
     }
 
-    @PutMapping("/{id}/status")
-    public ResponseEntity<SuccessResponse<ChangeOrderStatusResponse>> updateProductStatus(
-            @PathVariable Long id,
+    @PatchMapping("/{orderId}/status")
+    public ResponseEntity<SuccessResponse<ChangeOrderStatusResponse>> updateOrderStatus(
+            @PathVariable Long orderId,
             @Valid @RequestBody ChangeOrderStatusRequest request) {
 
-        ChangeOrderStatusResponse response = orderCommandService.updateStatusOrder(id, request);
+        ChangeOrderStatusResponse response = orderCommandService.updateStatusOrder(orderId, request);
 
         return ResponseEntity.ok(SuccessResponse.<ChangeOrderStatusResponse>builder()
                 .success(true)
