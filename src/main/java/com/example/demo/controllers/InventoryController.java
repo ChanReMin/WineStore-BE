@@ -167,7 +167,7 @@ public class InventoryController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(SuccessResponse.<InventoryLogResponse>builder()
                         .success(true)
-                        .message("Update inventory log created successfully")
+                        .message("Created inventory log created successfully")
                         .data(data)
                         .build());
     }
