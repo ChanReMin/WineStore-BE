@@ -2,7 +2,9 @@ package com.example.demo.services.commands.ServiceCommandImpl;
 
 import com.example.demo.commons.enums.OrderStatus;
 import com.example.demo.commons.enums.PaymentStatus;
+import com.example.demo.dtos.commands.order.ChangeOrderStatusRequest;
 import com.example.demo.dtos.commands.order.OrderCreateRequest;
+import com.example.demo.dtos.responses.order.ChangeOrderStatusResponse;
 import com.example.demo.dtos.responses.order.OrderCreateResponse;
 import com.example.demo.dtos.responses.order.UnavailableProductResponse;
 import com.example.demo.entities.*;
@@ -50,7 +52,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
     private final HttpServletRequest httpServletRequest;
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "writeTransactionManager")
     public OrderCreateResponse createOrder(OrderCreateRequest request) {
         log.info("Starting order creation for request: {}", request);
 
@@ -279,6 +281,38 @@ public class OrderCommandServiceImpl implements OrderCommandService {
                 .paymentStatusText(order.getPaymentStatus().getDescription())
                 .paymentUrl(paymentUrl)
                 .createdAt(OffsetDateTime.now()) // Using current time for response
+                .build();
+    }
+
+    @Override
+    @Transactional(transactionManager = "writeTransactionManager")
+    public ChangeOrderStatusResponse updateStatusOrder(Long orderId, ChangeOrderStatusRequest request) {
+        log.info("Updating order status. Order ID: {}, New Status: {}", orderId, request.getStatus());
+
+        Order order = orderCommandRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+
+        OrderStatus newStatus;
+        try {
+            newStatus = OrderStatus.fromValue(request.getStatus());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException(
+                    "Invalid status value. Allowed values: 1 (Pending), 2 (Confirmed), 6 (Cancelled), 3 (Paid)"
+            );
+        }
+
+        order.setStatus(newStatus);
+
+        // Save updated product
+        Order updatedOrder = orderCommandRepository.save(order);
+
+        log.info("✅ Product status updated successfully - productId: {}, status: {}",
+                orderId, newStatus.getDescription());
+
+        return ChangeOrderStatusResponse.builder()
+                .id(updatedOrder.getId())
+                .status(updatedOrder.getStatus().getValue())
+                .statusText(updatedOrder.getStatus(). getDescription())
                 .build();
     }
 
