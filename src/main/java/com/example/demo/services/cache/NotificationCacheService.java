@@ -29,7 +29,7 @@ public class NotificationCacheService {
     @Cacheable(value = "allNotifications", key = "'user_' + #userId",
             unless = "#result == null || #result.isEmpty()")
     public List<NotificationResponse> getAllNotificationsWithCache(Long userId) {
-        return notificationQueryService.getUserNotifications(userId, 0, Integer.MAX_VALUE).getContent();
+        return notificationQueryService.getUserNotifications(userId, 0, 100).getContent();
     }
 
     /**
