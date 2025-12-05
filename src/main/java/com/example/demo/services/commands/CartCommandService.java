@@ -49,47 +49,118 @@
         private final UserQueryRepository userQueryRepository;
         private final EntityManager entityManager; // Inject EntityManager // Inject UserQueryRepository
     
+//        @Transactional
+//        public CartItemAddResponse addItemToCart(AddItemToCartRequest request) {
+//            Long accountId = SecurityUtils.getCurrentUserUuid(); // This is account ID
+//            if (accountId == null) {
+//                throw new UnauthorizedException("User is not authenticated.");
+//            }
+//
+//            // 1. Validate product existence and availability
+//            Product product = productQueryService.getProductEntityByIdWithInventories(request.getProductId())
+//                    .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+//
+//            if (product.getStatus() != ProductStatus.ACTIVE) {
+//                throw new GoneException("The product has been discontinued or no longer exists.");
+//            }
+//            if (!product.isInStock()) {
+//                throw new GoneException("The product is out of stock");
+//            }
+//
+//            int availableQuantity = product.getTotalInventory();
+//            if (request.getQuantity() > availableQuantity) {
+//                throw new ConflictException("Exceeds available stock quantity.",
+//                        new ConflictException.ConflictData(availableQuantity, request.getQuantity()));
+//            }
+//
+//            // 2. Find or create user's cart
+//            Cart cart = cartQueryRepository.findByUserId(accountId) // findByUserId uses accountId as user.id
+//                    .orElseGet(() -> createNewCart(accountId));
+//
+//            // 3. Check if item already exists in cart
+//            // We need to fetch cart items belonging to this cart
+//            Optional<CartItem> existingCartItemOptional = cartItemQueryRepository.findByCartId(cart.getId())
+//                    .stream()
+//                    .filter(item -> item.getProduct().getId().equals(request.getProductId()))
+//                    .findFirst();
+//
+//            CartItem cartItem;
+//            if (existingCartItemOptional.isPresent()) {
+//                // Update existing item
+//                cartItem = existingCartItemOptional.get();
+//                int newQuantity = cartItem.getQuantity() + request.getQuantity();
+//
+//                if (newQuantity > availableQuantity) {
+//                    throw new ConflictException("Vượt quá số lượng tồn kho",
+//                            new ConflictException.ConflictData(availableQuantity, newQuantity));
+//                }
+//                cartItem.setQuantity(newQuantity);
+//                cartItem.setUpdatedAt(LocalDateTime.now());
+//            } else {
+//                // Add new item
+//                cartItem = CartItem.builder()
+//                        .cart(cart)
+//                        .product(product)
+//                        .quantity(request.getQuantity())
+//                        .unitPrice(product.getPrice())
+//                        .build();
+//                cartItem.setCreatedAt(LocalDateTime.now());
+//                cartItem.setUpdatedAt(LocalDateTime.now());
+//            }
+//
+//            cartItemCommandRepository.save(cartItem);
+//            cart.setUpdatedAt(LocalDateTime.now());
+//            cartCommandRepository.save(cart); // Update cart's updatedAt timestamp
+//
+//            return CartItemAddResponse.builder()
+//                    .cartItemId(cartItem.getId())
+//                    .productId(product.getId())
+//                    .quantity(cartItem.getQuantity())
+//                    .unitPrice(cartItem.getUnitPrice())
+//                    .lineTotal(cartItem.getLineTotal())
+//                    .build();
+//        }
+
         @Transactional
         public CartItemAddResponse addItemToCart(AddItemToCartRequest request) {
-            Long accountId = SecurityUtils.getCurrentUserUuid(); // This is account ID
+            Long accountId = SecurityUtils.getCurrentUserUuid();
             if (accountId == null) {
                 throw new UnauthorizedException("User is not authenticated.");
             }
-    
-            // 1. Validate product existence and availability
+
+            // 1. Validate product
             Product product = productQueryService.getProductEntityByIdWithInventories(request.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-    
+
             if (product.getStatus() != ProductStatus.ACTIVE) {
                 throw new GoneException("The product has been discontinued or no longer exists.");
             }
             if (!product.isInStock()) {
                 throw new GoneException("The product is out of stock");
             }
-    
+
             int availableQuantity = product.getTotalInventory();
             if (request.getQuantity() > availableQuantity) {
                 throw new ConflictException("Exceeds available stock quantity.",
                         new ConflictException.ConflictData(availableQuantity, request.getQuantity()));
             }
-    
-            // 2. Find or create user's cart
-            Cart cart = cartQueryRepository.findByUserId(accountId) // findByUserId uses accountId as user.id
+
+            // 2. Find or create cart
+            Cart cart = cartQueryRepository.findByUserId(accountId)
                     .orElseGet(() -> createNewCart(accountId));
-    
-            // 3. Check if item already exists in cart
-            // We need to fetch cart items belonging to this cart
-            Optional<CartItem> existingCartItemOptional = cartItemQueryRepository.findByCartId(cart.getId())
-                    .stream()
-                    .filter(item -> item.getProduct().getId().equals(request.getProductId()))
-                    .findFirst();
-    
+
+            // 3. Check BOTH active and soft-deleted items
+            // First check active items using the repository method
+            Optional<CartItem> activeCartItemOpt = cartItemQueryRepository
+                    .findByCartIdAndProductId(cart.getId(), request.getProductId());
+
             CartItem cartItem;
-            if (existingCartItemOptional.isPresent()) {
-                // Update existing item
-                cartItem = existingCartItemOptional.get();
+
+            if (activeCartItemOpt.isPresent()) {
+                // Update existing active item
+                cartItem = activeCartItemOpt.get();
                 int newQuantity = cartItem.getQuantity() + request.getQuantity();
-    
+
                 if (newQuantity > availableQuantity) {
                     throw new ConflictException("Vượt quá số lượng tồn kho",
                             new ConflictException.ConflictData(availableQuantity, newQuantity));
@@ -97,21 +168,35 @@
                 cartItem.setQuantity(newQuantity);
                 cartItem.setUpdatedAt(LocalDateTime.now());
             } else {
-                // Add new item
-                cartItem = CartItem.builder()
-                        .cart(cart)
-                        .product(product)
-                        .quantity(request.getQuantity())
-                        .unitPrice(product.getPrice())
-                        .build();
-                cartItem.setCreatedAt(LocalDateTime.now());
-                cartItem.setUpdatedAt(LocalDateTime.now());
+                // Check if there's a soft-deleted item with same cart + product
+                // We need to query WITHOUT the deletedAt filter
+                Optional<CartItem> softDeletedItemOpt = cartItemCommandRepository
+                        .findByCartIdAndProductIdIncludingDeleted(cart.getId(), request.getProductId());
+
+                if (softDeletedItemOpt.isPresent()) {
+                    // Restore the soft-deleted item
+                    cartItem = softDeletedItemOpt.get();
+                    cartItem.restore(); // Sets deletedAt to null
+                    cartItem.setQuantity(request.getQuantity());
+                    cartItem.setUnitPrice(product.getPrice()); // Update price
+                    cartItem.setUpdatedAt(LocalDateTime.now());
+                } else {
+                    // Create completely new item
+                    cartItem = CartItem.builder()
+                            .cart(cart)
+                            .product(product)
+                            .quantity(request.getQuantity())
+                            .unitPrice(product.getPrice())
+                            .build();
+                    cartItem.setCreatedAt(LocalDateTime.now());
+                    cartItem.setUpdatedAt(LocalDateTime.now());
+                }
             }
-    
+
             cartItemCommandRepository.save(cartItem);
             cart.setUpdatedAt(LocalDateTime.now());
-            cartCommandRepository.save(cart); // Update cart's updatedAt timestamp
-    
+            cartCommandRepository.save(cart);
+
             return CartItemAddResponse.builder()
                     .cartItemId(cartItem.getId())
                     .productId(product.getId())
@@ -120,6 +205,7 @@
                     .lineTotal(cartItem.getLineTotal())
                     .build();
         }
+
 
         @Transactional
         public CartItemUpdateResponse updateCartItemQuantity(
