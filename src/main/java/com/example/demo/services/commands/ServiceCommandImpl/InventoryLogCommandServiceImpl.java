@@ -59,7 +59,7 @@ public class InventoryLogCommandServiceImpl implements InventoryLogCommandServic
             }
         }
 
-        // Get or create inventory with PESSIMISTIC LOCK to prevent race conditions
+            // Get or create inventory with PESSIMISTIC LOCK to prevent race conditions
         Inventory inventory = inventoryCommandRepository
                 .findByProductAndWarehouseWithLock(product, warehouse)
                 .orElseGet(() -> {
